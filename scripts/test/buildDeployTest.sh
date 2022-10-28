@@ -46,6 +46,7 @@ echo "Configuring Deployment"
 echo "-------------------------------------------------------------------------------"
 TEMPLATE_DIR=${PROJECT_ROOT}/scripts/templates
 GENERATED_DIR=${PROJECT_ROOT}/scripts/generated
+JAR_DIR=${PROJECT_ROOT}/scripts/jars
 INSTANCE_PROPERTIES=${GENERATED_DIR}/instance.properties
 TABLE_PROPERTIES=${GENERATED_DIR}/table.properties
 SYSTEM_TEST_PROPERTIES=${GENERATED_DIR}/system-test.properties
