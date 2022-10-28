@@ -16,13 +16,13 @@
 package sleeper.systemtest;
 
 import org.apache.commons.lang3.EnumUtils;
-import sleeper.configuration.properties.InstanceProperty;
+import sleeper.configuration.properties.SleeperProperty;
 import sleeper.systemtest.ingest.IngestMode;
 
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public enum SystemTestProperty implements InstanceProperty {
+public enum SystemTestProperty implements SleeperProperty {
     NUMBER_OF_WRITERS("sleeper.systemtest.writers", null, Objects::nonNull),
     NUMBER_OF_RECORDS_PER_WRITER("sleeper.systemtest.records-per-writer", null, Objects::nonNull),
     INGEST_MODE("sleeper.systemtest.ingest.mode", null, s -> EnumUtils.isValidEnumIgnoreCase(IngestMode.class, s)),

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Copyright 2022 Crown Copyright
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,15 +47,19 @@ echo "--------------------------------------------------------------------------
 TEMPLATE_DIR=${PROJECT_ROOT}/scripts/templates
 GENERATED_DIR=${PROJECT_ROOT}/scripts/generated
 INSTANCE_PROPERTIES=${GENERATED_DIR}/instance.properties
+TABLE_PROPERTIES=${GENERATED_DIR}/table.properties
+SYSTEM_TEST_PROPERTIES=${GENERATED_DIR}/system-test.properties
 
 mkdir -p ${GENERATED_DIR}
 
 echo "Creating System Test Specific Instance Properties Template"
 sed \
-  -e "s|^sleeper.systemtest.repo=.*|sleeper.systemtest.repo=${INSTANCE_ID}/system-test|" \
   -e "s|^sleeper.optional.stacks=.*|sleeper.optional.stacks=CompactionStack,GarbageCollectorStack,PartitionSplittingStack,QueryStack,SystemTestStack,IngestStack,EmrBulkImportStack|" \
   -e "s|^sleeper.retain.infra.after.destroy=.*|sleeper.retain.infra.after.destroy=false|" \
   ${THIS_DIR}/system-test-instance.properties > ${INSTANCE_PROPERTIES}
+sed \
+  -e "s|^sleeper.systemtest.repo=.*|sleeper.systemtest.repo=${INSTANCE_ID}/system-test|" \
+  ${THIS_DIR}/system-test.properties > ${SYSTEM_TEST_PROPERTIES}
 
 echo "THIS_DIR: ${THIS_DIR}"
 echo "PROJECT_ROOT: ${PROJECT_ROOT}"
@@ -71,10 +75,19 @@ echo "Starting Pre-deployment steps"
 ${PROJECT_ROOT}/scripts/deploy/pre-deployment.sh ${INSTANCE_ID} ${VPC} ${SUBNET} ${TABLE_NAME} ${TEMPLATE_DIR} ${GENERATED_DIR}
 
 echo "-------------------------------------------------------------------------------"
-echo "Deploying Stack"
+echo "Deploying System Stack"
+echo "-------------------------------------------------------------------------------"
+cdk -a "java -cp ${JAR_DIR}/cdk-${VERSION}.jar sleeper.cdk.SleeperCdkApp" deploy \
+--require-approval never -c propertiesfile=${INSTANCE_PROPERTIES} -c validate=true "*"
+
+${PROJECT_ROOT}/scripts/deploy/connectToTable.sh ${INSTANCE_ID} ${TABLE_NAME}
+
+echo "-------------------------------------------------------------------------------"
+echo "Deploying System Test Stack"
 echo "-------------------------------------------------------------------------------"
 cdk -a "java -cp ${PROJECT_ROOT}/java/system-test/target/system-test-*-utility.jar sleeper.systemtest.cdk.SystemTestApp" deploy \
---require-approval never -c testpropertiesfile=${GENERATED_DIR}/instance.properties -c validate=true "*"
+--require-approval never -c instancepropertiesfile=${INSTANCE_PROPERTIES} -c validate=true "*" \
+-c tablepropertiesfile=${TABLE_PROPERTIES} -c testpropertiesfile=${SYSTEM_TEST_PROPERTIES}
 
 echo "-------------------------------------------------------------------------------"
 echo "Writing Random Data"

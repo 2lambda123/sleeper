@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import sleeper.bulkimport.job.BulkImportJob;
 import sleeper.bulkimport.job.BulkImportJobSerDe;
 import sleeper.configuration.jars.ObjectFactory;
+import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.table.TableProperties;
 import sleeper.core.record.Record;
 import sleeper.core.schema.Schema;
@@ -59,10 +60,11 @@ public class WriteRandomDataViaQueueJob extends WriteRandomDataJob {
     public WriteRandomDataViaQueueJob(
             String ingestMode,
             ObjectFactory objectFactory,
-            SystemTestProperties properties,
+            InstanceProperties instanceProperties,
             TableProperties tableProperties,
+            SystemTestProperties testProperties,
             StateStore stateStore) {
-        super(objectFactory, properties, tableProperties, stateStore);
+        super(objectFactory, instanceProperties, tableProperties, testProperties, stateStore);
         this.ingestMode = ingestMode;
     }
 
@@ -120,7 +122,7 @@ public class WriteRandomDataViaQueueJob extends WriteRandomDataJob {
             String jsonJob = new IngestJobSerDe().toJson(ingestJob);
             LOGGER.debug("Sending message to ingest queue ({})", jsonJob);
             sendMessageRequest = new SendMessageRequest()
-                    .withQueueUrl(getSystemTestProperties().get(INGEST_JOB_QUEUE_URL))
+                    .withQueueUrl(getInstanceProperties().get(INGEST_JOB_QUEUE_URL))
                     .withMessageBody(jsonJob);
         } else if (ingestMode.equalsIgnoreCase(IngestMode.BULK_IMPORT_QUEUE.name())) {
             BulkImportJob bulkImportJob = new BulkImportJob.Builder()
@@ -131,7 +133,7 @@ public class WriteRandomDataViaQueueJob extends WriteRandomDataJob {
             String jsonJob = new BulkImportJobSerDe().toJson(bulkImportJob);
             LOGGER.debug("Sending message to ingest queue ({})", jsonJob);
             sendMessageRequest = new SendMessageRequest()
-                    .withQueueUrl(getSystemTestProperties().get(BULK_IMPORT_EMR_JOB_QUEUE_URL))
+                    .withQueueUrl(getInstanceProperties().get(BULK_IMPORT_EMR_JOB_QUEUE_URL))
                     .withMessageBody(jsonJob);
         } else {
             throw new IllegalArgumentException("Unknown ingest mode of " + ingestMode);

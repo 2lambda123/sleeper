@@ -24,7 +24,6 @@ import software.amazon.awscdk.services.dynamodb.Attribute;
 import software.amazon.awscdk.services.dynamodb.AttributeType;
 import software.amazon.awscdk.services.dynamodb.BillingMode;
 import software.amazon.awscdk.services.dynamodb.Table;
-import software.amazon.awscdk.services.iam.IGrantable;
 import software.constructs.Construct;
 
 import static sleeper.cdk.Utils.removalPolicy;
@@ -35,10 +34,8 @@ import static sleeper.configuration.properties.table.TableProperty.PARTITION_TAB
 import static sleeper.configuration.properties.table.TableProperty.READY_FOR_GC_FILEINFO_TABLENAME;
 import static sleeper.configuration.properties.table.TableProperty.TABLE_NAME;
 
-public class DynamoDBStateStoreStack implements StateStoreStack {
-    private final Table activeFileInfoTable;
-    private final Table readyForGCFileInfoTable;
-    private final Table partitionTable;
+public class DynamoDBStateStoreStack implements StateStoreStackWithPermissions {
+    private final DynamoDBStateStorePermissions permissions;
 
     public DynamoDBStateStoreStack(Construct scope,
                                    Provider tablesProvider,
@@ -55,7 +52,7 @@ public class DynamoDBStateStoreStack implements StateStoreStack {
                 .type(AttributeType.STRING)
                 .build();
 
-        this.activeFileInfoTable = Table.Builder
+        Table activeFileInfoTable = Table.Builder
                 .create(scope, tableName + "DynamoDBActiveFileInfoTable")
                 .tableName(String.join("-", "sleeper", instanceId, "table", tableName, "active-files"))
                 .removalPolicy(removalPolicy)
@@ -72,7 +69,7 @@ public class DynamoDBStateStoreStack implements StateStoreStack {
                 .name(DynamoDBStateStore.FILE_NAME)
                 .type(AttributeType.STRING)
                 .build();
-        this.readyForGCFileInfoTable = Table.Builder
+        Table readyForGCFileInfoTable = Table.Builder
                 .create(scope, tableName + "DynamoDBReadyForGCFileInfoTable")
                 .tableName(String.join("-", "sleeper", instanceId, "table", tableName, "gc-files"))
                 .removalPolicy(removalPolicy)
@@ -88,7 +85,7 @@ public class DynamoDBStateStoreStack implements StateStoreStack {
                 .name(DynamoDBStateStore.PARTITION_ID)
                 .type(AttributeType.STRING)
                 .build();
-        this.partitionTable = Table.Builder
+        Table partitionTable = Table.Builder
                 .create(scope, tableName + "DynamoDBPartitionInfoTable")
                 .tableName(String.join("-", "sleeper", instanceId, "table", tableName, "partitions"))
                 .removalPolicy(removalPolicy)
@@ -99,35 +96,15 @@ public class DynamoDBStateStoreStack implements StateStoreStack {
 
         tableProperties.set(PARTITION_TABLENAME, partitionTable.getTableName());
         partitionTable.grantReadWriteData(tablesProvider.getOnEventHandler());
+        permissions = DynamoDBStateStorePermissions.builder()
+                .activeFileInfoTable(activeFileInfoTable)
+                .readyForGCFileInfoTable(readyForGCFileInfoTable)
+                .partitionTable(partitionTable)
+                .build();
     }
 
     @Override
-    public void grantReadActiveFileMetadata(IGrantable grantee) {
-        activeFileInfoTable.grantReadData(grantee);
-    }
-
-    @Override
-    public void grantReadWriteActiveFileMetadata(IGrantable grantee) {
-        activeFileInfoTable.grantReadWriteData(grantee);
-    }
-
-    @Override
-    public void grantReadWriteReadyForGCFileMetadata(IGrantable grantee) {
-        readyForGCFileInfoTable.grantReadWriteData(grantee);
-    }
-
-    @Override
-    public void grantWriteReadyForGCFileMetadata(IGrantable grantee) {
-        readyForGCFileInfoTable.grantWriteData(grantee);
-    }
-
-    @Override
-    public void grantReadPartitionMetadata(IGrantable grantee) {
-        partitionTable.grantReadData(grantee);
-    }
-
-    @Override
-    public void grantReadWritePartitionMetadata(IGrantable grantee) {
-        partitionTable.grantReadWriteData(grantee);
+    public DynamoDBStateStorePermissions getPermissions() {
+        return permissions;
     }
 }

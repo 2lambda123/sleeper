@@ -21,6 +21,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import sleeper.configuration.jars.ObjectFactory;
 import sleeper.configuration.jars.ObjectFactoryException;
+import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.table.TableProperties;
 import sleeper.configuration.properties.table.TablePropertiesProvider;
 import sleeper.statestore.StateStore;
@@ -49,23 +50,27 @@ public class IngestRandomData {
         AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
         AmazonDynamoDB dynamoDBClient = AmazonDynamoDBClientBuilder.defaultClient();
 
+        InstanceProperties instanceProperties = new InstanceProperties();
+        instanceProperties.loadFromS3(s3Client, s3Bucket);
         SystemTestProperties systemTestProperties = new SystemTestProperties();
-        systemTestProperties.loadFromS3(s3Client, s3Bucket);
+        systemTestProperties.loadFromS3(s3Client, instanceProperties);
 
-        ObjectFactory objectFactory = new ObjectFactory(systemTestProperties, s3Client, "/tmp");
+        ObjectFactory objectFactory = new ObjectFactory(instanceProperties, s3Client, "/tmp");
 
-        TableProperties tableProperties = new TablePropertiesProvider(s3Client, systemTestProperties).getTableProperties(args[1]);
+        TableProperties tableProperties = new TablePropertiesProvider(s3Client, instanceProperties).getTableProperties(args[1]);
 
-        StateStore stateStore = new StateStoreProvider(dynamoDBClient, systemTestProperties, HadoopConfigurationProvider.getConfigurationForECS(systemTestProperties))
+        StateStore stateStore = new StateStoreProvider(dynamoDBClient, instanceProperties, HadoopConfigurationProvider.getConfigurationForECS(instanceProperties))
                 .getStateStore(tableProperties);
 
         s3Client.shutdown();
 
         String ingestMode = systemTestProperties.get(INGEST_MODE);
         if (IngestMode.QUEUE.name().equalsIgnoreCase(ingestMode) || IngestMode.BULK_IMPORT_QUEUE.name().equalsIgnoreCase(ingestMode)) {
-            new WriteRandomDataViaQueueJob(ingestMode, objectFactory, systemTestProperties, tableProperties, stateStore).run();
+            new WriteRandomDataViaQueueJob(ingestMode, objectFactory,
+                    instanceProperties, tableProperties, systemTestProperties, stateStore).run();
         } else if (IngestMode.DIRECT.name().equalsIgnoreCase(ingestMode)) {
-            new UploadMultipleShardedSortedParquetFiles(objectFactory, systemTestProperties, tableProperties, stateStore).run();
+            new UploadMultipleShardedSortedParquetFiles(objectFactory,
+                    instanceProperties, tableProperties, systemTestProperties, stateStore).run();
         } else {
             throw new IllegalArgumentException("Unrecognised ingest mode: " + ingestMode +
                     ". Only direct and queue ingest modes are available.");

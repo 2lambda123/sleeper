@@ -19,12 +19,12 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import sleeper.cdk.ConfigValidator;
 import sleeper.cdk.SleeperCdkApp;
-import sleeper.cdk.stack.IngestStack;
-import sleeper.cdk.stack.bulkimport.EmrBulkImportStack;
 import sleeper.configuration.properties.InstanceProperties;
+import sleeper.configuration.properties.table.TableProperties;
 import sleeper.systemtest.SystemTestProperties;
 import software.amazon.awscdk.App;
 import software.amazon.awscdk.Environment;
+import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 import software.amazon.awscdk.Tags;
 
@@ -39,72 +39,59 @@ import static sleeper.configuration.properties.UserDefinedInstanceProperty.REGIO
  * An {@link App} to deploy the {@link SleeperCdkApp} and the additional stacks
  * needed for the system tests.
  */
-public class SystemTestApp extends SleeperCdkApp {
-    private boolean readyToGenerateProperties = false;
+public class SystemTestApp extends Stack {
+    private final InstanceProperties instanceProperties;
+    private final TableProperties tableProperties;
+    private final SystemTestProperties testProperties;
 
-    public SystemTestApp(App app, String id, SystemTestProperties sleeperProperties, StackProps props) {
-        super(app, id, sleeperProperties, props);
+    public SystemTestApp(
+            App app, String id, StackProps props,
+            InstanceProperties instanceProperties,
+            TableProperties tableProperties,
+            SystemTestProperties testProperties) {
+        super(app, id, props);
+        this.instanceProperties = instanceProperties;
+        this.tableProperties = tableProperties;
+        this.testProperties = testProperties;
     }
 
     public void create() {
-        super.create();
-        SystemTestProperties systemTestProperties = getInstanceProperties();
 
         // Stack for writing random data
-        IngestStack ingestStack = getIngestStack();
-        EmrBulkImportStack emrBulkImportStack = getEmrBulkImportStack();
         SystemTestStack systemTestStack = new SystemTestStack(this,
-                "SystemTest",
-                getTableStack().getDataBuckets(),
-                getTableStack().getStateStoreStacks(),
-                systemTestProperties,
-                ingestStack == null ? null : ingestStack.getIngestJobQueue(),
-                emrBulkImportStack == null ? null : emrBulkImportStack.getEmrBulkImportJobQueue());
-        systemTestProperties.getTags()
+                "SystemTest", instanceProperties, tableProperties, testProperties);
+        instanceProperties.getTags()
                 .forEach((key, value) -> Tags.of(systemTestStack).add(key, value));
-
-        readyToGenerateProperties = true;
-        generateProperties();
-    }
-
-    @Override
-    protected void generateProperties() {
-        if (readyToGenerateProperties) {
-            super.generateProperties();
-        }
-    }
-
-    @Override
-    protected SystemTestProperties getInstanceProperties() throws RuntimeException {
-        InstanceProperties properties = super.getInstanceProperties();
-        if (properties instanceof SystemTestProperties) {
-            return (SystemTestProperties) properties;
-        }
-        throw new RuntimeException("Error when retrieving instance properties");
     }
 
     public static void main(String[] args) throws FileNotFoundException {
         App app = new App();
 
+        String instancePropertiesFile = (String) app.getNode().tryGetContext("instancepropertiesfile");
+        String tablePropertiesFile = (String) app.getNode().tryGetContext("tablepropertiesfile");
         String systemTestPropertiesFile = (String) app.getNode().tryGetContext("testpropertiesfile");
         String validate = (String) app.getNode().tryGetContext("validate");
-        SystemTestProperties systemTestProperties = new SystemTestProperties();
-        systemTestProperties.load(new File(systemTestPropertiesFile));
+        InstanceProperties instanceProperties = new InstanceProperties();
+        instanceProperties.load(new File(instancePropertiesFile));
+        TableProperties tableProperties = new TableProperties(instanceProperties);
+        tableProperties.load(new File(tablePropertiesFile));
+        SystemTestProperties testProperties = new SystemTestProperties();
+        testProperties.load(new File(systemTestPropertiesFile));
         if ("true".equalsIgnoreCase(validate)) {
             new ConfigValidator(AmazonS3ClientBuilder.defaultClient(),
-                    AmazonDynamoDBClientBuilder.defaultClient()).validate(systemTestProperties);
+                    AmazonDynamoDBClientBuilder.defaultClient()).validate(instanceProperties);
         }
 
-        String id = systemTestProperties.get(ID);
+        String id = instanceProperties.get(ID);
         Environment environment = Environment.builder()
-                .account(systemTestProperties.get(ACCOUNT))
-                .region(systemTestProperties.get(REGION))
+                .account(instanceProperties.get(ACCOUNT))
+                .region(instanceProperties.get(REGION))
                 .build();
 
-        new SystemTestApp(app, id, systemTestProperties, StackProps.builder()
+        new SystemTestApp(app, id, StackProps.builder()
                 .stackName(id)
                 .env(environment)
-                .build()).create();
+                .build(), instanceProperties, tableProperties, testProperties).create();
         app.synth();
     }
 }

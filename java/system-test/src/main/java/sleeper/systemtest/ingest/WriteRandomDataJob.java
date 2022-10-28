@@ -16,6 +16,7 @@
 package sleeper.systemtest.ingest;
 
 import sleeper.configuration.jars.ObjectFactory;
+import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.table.TableProperties;
 import sleeper.core.record.Record;
 import sleeper.core.schema.Schema;
@@ -31,17 +32,20 @@ import static sleeper.systemtest.SystemTestProperty.NUMBER_OF_RECORDS_PER_WRITER
 
 public abstract class WriteRandomDataJob {
     private final ObjectFactory objectFactory;
-    private final SystemTestProperties systemTestProperties;
+    private final InstanceProperties instanceProperties;
     private final TableProperties tableProperties;
+    private final SystemTestProperties systemTestProperties;
     private final StateStore stateStore;
 
     public WriteRandomDataJob(ObjectFactory objectFactory,
-                              SystemTestProperties systemTestProperties,
+                              InstanceProperties instanceProperties,
                               TableProperties tableProperties,
+                              SystemTestProperties systemTestProperties,
                               StateStore stateStore) {
         this.objectFactory = objectFactory;
-        this.systemTestProperties = systemTestProperties;
+        this.instanceProperties = instanceProperties;
         this.tableProperties = tableProperties;
+        this.systemTestProperties = systemTestProperties;
         this.stateStore = stateStore;
     }
 
@@ -59,12 +63,16 @@ public abstract class WriteRandomDataJob {
         return objectFactory;
     }
 
-    protected SystemTestProperties getSystemTestProperties() {
-        return systemTestProperties;
+    protected InstanceProperties getInstanceProperties() {
+        return instanceProperties;
     }
 
     protected TableProperties getTableProperties() {
         return tableProperties;
+    }
+
+    protected SystemTestProperties getSystemTestProperties() {
+        return systemTestProperties;
     }
 
     protected StateStore getStateStore() {

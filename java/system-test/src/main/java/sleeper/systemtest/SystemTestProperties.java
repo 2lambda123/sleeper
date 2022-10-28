@@ -15,21 +15,36 @@
  */
 package sleeper.systemtest;
 
+import com.amazonaws.services.s3.AmazonS3;
 import sleeper.configuration.properties.InstanceProperties;
+import sleeper.configuration.properties.SleeperProperties;
+
+import java.io.IOException;
+
+import static sleeper.configuration.properties.SystemDefinedInstanceProperty.CONFIG_BUCKET;
 
 /**
  * A class that extends {@link InstanceProperties} adding properties needed to
  * run the system tests that add random data to Sleeper.
  */
-public class SystemTestProperties extends InstanceProperties {
+public class SystemTestProperties extends SleeperProperties<SystemTestProperty> {
+
+    public static final String S3_SYSTEM_TEST_PROPERTIES_FILE = "systemtest";
 
     @Override
     protected void validate() {
-        super.validate();
         for (SystemTestProperty systemTestProperty : SystemTestProperty.values()) {
             if (!systemTestProperty.validationPredicate().test(get(systemTestProperty))) {
                 throw new IllegalArgumentException("sleeper property: " + systemTestProperty.getPropertyName() + " is invalid");
             }
         }
+    }
+
+    public void loadFromS3(AmazonS3 s3Client, InstanceProperties instanceProperties) throws IOException {
+        super.loadFromS3(s3Client, instanceProperties.get(CONFIG_BUCKET), S3_SYSTEM_TEST_PROPERTIES_FILE);
+    }
+
+    public void saveToS3(AmazonS3 s3Client, InstanceProperties instanceProperties) throws IOException {
+        super.saveToS3(s3Client, instanceProperties.get(CONFIG_BUCKET), S3_SYSTEM_TEST_PROPERTIES_FILE);
     }
 }

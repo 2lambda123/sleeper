@@ -24,7 +24,6 @@ import software.amazon.awscdk.services.dynamodb.Attribute;
 import software.amazon.awscdk.services.dynamodb.AttributeType;
 import software.amazon.awscdk.services.dynamodb.BillingMode;
 import software.amazon.awscdk.services.dynamodb.Table;
-import software.amazon.awscdk.services.iam.IGrantable;
 import software.amazon.awscdk.services.s3.Bucket;
 import software.constructs.Construct;
 
@@ -36,16 +35,14 @@ import static sleeper.configuration.properties.table.TableProperty.REVISION_TABL
 import static sleeper.configuration.properties.table.TableProperty.S3_STATE_STORE_DYNAMO_POINT_IN_TIME_RECOVERY;
 import static sleeper.configuration.properties.table.TableProperty.TABLE_NAME;
 
-public class S3StateStoreStack implements StateStoreStack {
-    private final Table revisionTable;
-    private final Bucket dataBucket;
+public class S3StateStoreStack implements StateStoreStackWithPermissions {
+    private final S3StateStorePermissions permissions;
 
     public S3StateStoreStack(Construct scope,
                              Bucket dataBucket,
                              InstanceProperties instanceProperties,
                              TableProperties tableProperties,
                              Provider tablesProvider) {
-        this.dataBucket = dataBucket;
 
         RemovalPolicy removalPolicy = removalPolicy(instanceProperties);
 
@@ -55,7 +52,7 @@ public class S3StateStoreStack implements StateStoreStack {
                 .type(AttributeType.STRING)
                 .build();
 
-        this.revisionTable = Table.Builder
+        Table revisionTable = Table.Builder
                 .create(scope, "DynamoDBRevisionTable")
                 .tableName(String.join("-", "sleeper", instanceProperties.get(ID), "table",
                         tableProperties.get(TABLE_NAME), "revisions").toLowerCase(Locale.ROOT))
@@ -64,48 +61,17 @@ public class S3StateStoreStack implements StateStoreStack {
                 .partitionKey(partitionKeyRevisionTable)
                 .pointInTimeRecovery(tableProperties.getBoolean(S3_STATE_STORE_DYNAMO_POINT_IN_TIME_RECOVERY))
                 .build();
-        tableProperties.set(REVISION_TABLENAME, this.revisionTable.getTableName());
+        tableProperties.set(REVISION_TABLENAME, revisionTable.getTableName());
 
-        this.revisionTable.grantReadWriteData(tablesProvider.getOnEventHandler());
+        revisionTable.grantReadWriteData(tablesProvider.getOnEventHandler());
+        permissions = S3StateStorePermissions.builder()
+                .dataBucket(dataBucket).revisionTable(revisionTable)
+                .build();
     }
 
     @Override
-    public void grantReadActiveFileMetadata(IGrantable grantee) {
-        grantRead(grantee);
+    public S3StateStorePermissions getPermissions() {
+        return permissions;
     }
 
-    @Override
-    public void grantReadWriteActiveFileMetadata(IGrantable grantee) {
-        grantReadWrite(grantee);
-    }
-
-    @Override
-    public void grantReadWriteReadyForGCFileMetadata(IGrantable grantee) {
-        grantReadWrite(grantee);
-    }
-
-    @Override
-    public void grantWriteReadyForGCFileMetadata(IGrantable grantee) {
-        grantReadWrite(grantee);
-    }
-
-    @Override
-    public void grantReadPartitionMetadata(IGrantable grantee) {
-        grantRead(grantee);
-    }
-
-    @Override
-    public void grantReadWritePartitionMetadata(IGrantable grantee) {
-        grantReadWrite(grantee);
-    }
-
-    private void grantReadWrite(IGrantable grantee) {
-        revisionTable.grantReadWriteData(grantee);
-        dataBucket.grantReadWrite(grantee); // TODO Only needs access to keys starting with 'statestore'
-    }
-
-    private void grantRead(IGrantable grantee) {
-        revisionTable.grantReadData(grantee);
-        dataBucket.grantRead(grantee); // TODO Only needs access to keys starting with 'statestore'
-    }
 }

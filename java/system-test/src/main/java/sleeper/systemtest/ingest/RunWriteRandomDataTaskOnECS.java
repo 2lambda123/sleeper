@@ -28,6 +28,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.table.TableProperties;
 import sleeper.configuration.properties.table.TablePropertiesProvider;
 import sleeper.systemtest.SystemTestProperties;
@@ -51,10 +52,13 @@ import static sleeper.systemtest.cdk.SystemTestStack.SYSTEM_TEST_CONTAINER;
 public class RunWriteRandomDataTaskOnECS {
     private static final Logger LOGGER = LoggerFactory.getLogger(RunWriteRandomDataTaskOnECS.class);
 
-    private final SystemTestProperties systemTestProperties;
+    private final InstanceProperties instanceProperties;
     private final TableProperties tableProperties;
+    private final SystemTestProperties systemTestProperties;
 
-    public RunWriteRandomDataTaskOnECS(SystemTestProperties systemTestProperties, TableProperties tableProperties) {
+    public RunWriteRandomDataTaskOnECS(
+            InstanceProperties instanceProperties, TableProperties tableProperties, SystemTestProperties systemTestProperties) {
+        this.instanceProperties = instanceProperties;
         this.systemTestProperties = systemTestProperties;
         this.tableProperties = tableProperties;
     }
@@ -63,7 +67,7 @@ public class RunWriteRandomDataTaskOnECS {
         AmazonECS ecsClient = AmazonECSClientBuilder.defaultClient();
 
         List<String> args = Arrays.asList(
-                systemTestProperties.get(CONFIG_BUCKET),
+                instanceProperties.get(CONFIG_BUCKET),
                 tableProperties.get(TABLE_NAME));
 
         ContainerOverride containerOverride = new ContainerOverride()
@@ -74,7 +78,7 @@ public class RunWriteRandomDataTaskOnECS {
                 .withContainerOverrides(containerOverride);
 
         AwsVpcConfiguration vpcConfiguration = new AwsVpcConfiguration()
-                .withSubnets(systemTestProperties.get(SUBNET));
+                .withSubnets(instanceProperties.get(SUBNET));
 
         NetworkConfiguration networkConfiguration = new NetworkConfiguration()
                 .withAwsvpcConfiguration(vpcConfiguration);
@@ -86,7 +90,7 @@ public class RunWriteRandomDataTaskOnECS {
                 .withNetworkConfiguration(networkConfiguration)
                 .withOverrides(override)
                 .withPropagateTags(PropagateTags.TASK_DEFINITION)
-                .withPlatformVersion(systemTestProperties.get(FARGATE_VERSION));
+                .withPlatformVersion(instanceProperties.get(FARGATE_VERSION));
 
         for (int i = 0; i < systemTestProperties.getInt(NUMBER_OF_WRITERS); i++) {
             if (i > 0 && i % 10 == 0) {
@@ -108,10 +112,13 @@ public class RunWriteRandomDataTaskOnECS {
         }
 
         AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+        InstanceProperties instanceProperties = new InstanceProperties();
+        instanceProperties.loadFromS3GivenInstanceId(s3Client, args[0]);
         SystemTestProperties systemTestProperties = new SystemTestProperties();
-        systemTestProperties.loadFromS3GivenInstanceId(s3Client, args[0]);
-        TableProperties tableProperties = new TablePropertiesProvider(s3Client, systemTestProperties).getTableProperties(args[1]);
-        RunWriteRandomDataTaskOnECS runWriteRandomDataTaskOnECS = new RunWriteRandomDataTaskOnECS(systemTestProperties, tableProperties);
+        systemTestProperties.loadFromS3(s3Client, instanceProperties);
+        TableProperties tableProperties = new TablePropertiesProvider(s3Client, instanceProperties).getTableProperties(args[1]);
+        RunWriteRandomDataTaskOnECS runWriteRandomDataTaskOnECS = new RunWriteRandomDataTaskOnECS(
+                instanceProperties, tableProperties, systemTestProperties);
         runWriteRandomDataTaskOnECS.run();
 
         s3Client.shutdown();

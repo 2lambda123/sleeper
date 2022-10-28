@@ -18,6 +18,7 @@ package sleeper.systemtest.ingest;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import sleeper.configuration.jars.ObjectFactory;
+import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.table.TableProperties;
 import sleeper.core.iterator.CloseableIterator;
 import sleeper.core.iterator.IteratorException;
@@ -38,10 +39,11 @@ public class UploadMultipleShardedSortedParquetFiles extends WriteRandomDataJob 
 
     public UploadMultipleShardedSortedParquetFiles(
             ObjectFactory objectFactory,
-            SystemTestProperties properties,
+            InstanceProperties instanceProperties,
             TableProperties tableProperties,
+            SystemTestProperties testProperties,
             StateStore stateStore) {
-        super(objectFactory, properties, tableProperties, stateStore);
+        super(objectFactory, instanceProperties, tableProperties, testProperties, stateStore);
     }
 
     public void run() throws IOException {
@@ -55,7 +57,7 @@ public class UploadMultipleShardedSortedParquetFiles extends WriteRandomDataJob 
             IngestRecordsUsingPropertiesSpecifiedMethod.ingestFromRecordIterator(
                     getClassFactory(),
                     getStateStore(),
-                    getSystemTestProperties(),
+                    getInstanceProperties(),
                     getTableProperties(),
                     "/mnt/scratch",
                     null,

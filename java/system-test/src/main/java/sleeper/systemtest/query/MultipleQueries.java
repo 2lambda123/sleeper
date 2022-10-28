@@ -27,6 +27,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sleeper.clients.QueryLambdaClient;
+import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.table.TablePropertiesProvider;
 import sleeper.core.key.Key;
 import sleeper.core.range.Range;
@@ -55,6 +56,7 @@ import static sleeper.configuration.properties.SystemDefinedInstanceProperty.QUE
  */
 public class MultipleQueries {
     private final long numQueries;
+    private final InstanceProperties instanceProperties;
     private final SystemTestProperties systemTestProperties;
     private final AmazonSQS sqsClient;
     private final AmazonS3 s3Client;
@@ -66,12 +68,14 @@ public class MultipleQueries {
     public MultipleQueries(
             String tableName,
             long numQueries,
+            InstanceProperties instanceProperties,
             SystemTestProperties systemTestProperties,
             AmazonSQS sqsClient,
             AmazonS3 s3Client,
             AmazonDynamoDB dynamoClient) {
         this.tableName = tableName;
         this.numQueries = numQueries;
+        this.instanceProperties = instanceProperties;
         this.systemTestProperties = systemTestProperties;
         this.sqsClient = sqsClient;
         this.s3Client = s3Client;
@@ -79,8 +83,8 @@ public class MultipleQueries {
     }
 
     public void run() {
-        TablePropertiesProvider tablePropertiesProvider = new TablePropertiesProvider(s3Client, systemTestProperties);
-        QueryLambdaClient queryLambdaClient = new QueryLambdaClient(s3Client, dynamoClient, sqsClient, systemTestProperties);
+        TablePropertiesProvider tablePropertiesProvider = new TablePropertiesProvider(s3Client, instanceProperties);
+        QueryLambdaClient queryLambdaClient = new QueryLambdaClient(s3Client, dynamoClient, sqsClient, instanceProperties);
 
         Schema schema = tablePropertiesProvider.getTableProperties(tableName).getSchema();
         RangeFactory rangeFactory = new RangeFactory(schema);
@@ -111,7 +115,7 @@ public class MultipleQueries {
         startTime = System.currentTimeMillis();
         while (numQueryResultsReceived < numQueries) {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest()
-                    .withQueueUrl(systemTestProperties.get(QUERY_RESULTS_QUEUE_URL))
+                    .withQueueUrl(instanceProperties.get(QUERY_RESULTS_QUEUE_URL))
                     .withMaxNumberOfMessages(10)
                     .withWaitTimeSeconds(20);
             ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
@@ -127,7 +131,7 @@ public class MultipleQueries {
                 System.out.println(records.size() + " results for query " + queryId);
                 totalResults += records.size();
                 records.stream().forEach(System.out::println);
-                sqsClient.deleteMessage(systemTestProperties.get(QUERY_RESULTS_QUEUE_URL), messageHandle);
+                sqsClient.deleteMessage(instanceProperties.get(QUERY_RESULTS_QUEUE_URL), messageHandle);
             }
         }
         endTime = System.currentTimeMillis();
@@ -142,13 +146,15 @@ public class MultipleQueries {
         }
 
         AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+        InstanceProperties instanceProperties = new InstanceProperties();
+        instanceProperties.loadFromS3(s3Client, args[0]);
         SystemTestProperties systemTestProperties = new SystemTestProperties();
-        systemTestProperties.loadFromS3(s3Client, args[0]);
+        systemTestProperties.loadFromS3(s3Client, instanceProperties);
         String tableName = args[1];
         long numQueries = Long.parseLong(args[2]); // TODO Get from system test properties file
         AmazonSQS sqsClient = AmazonSQSClientBuilder.defaultClient();
         AmazonDynamoDB dynamoClient = AmazonDynamoDBClientBuilder.defaultClient();
-        MultipleQueries multipleQueries = new MultipleQueries(tableName, numQueries, systemTestProperties, sqsClient, s3Client, dynamoClient);
+        MultipleQueries multipleQueries = new MultipleQueries(tableName, numQueries, instanceProperties, systemTestProperties, sqsClient, s3Client, dynamoClient);
         multipleQueries.run();
         s3Client.shutdown();
         sqsClient.shutdown();
