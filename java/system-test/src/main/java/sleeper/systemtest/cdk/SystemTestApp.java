@@ -18,7 +18,6 @@ package sleeper.systemtest.cdk;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import sleeper.cdk.ConfigValidator;
-import sleeper.cdk.SleeperCdkApp;
 import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.table.TableProperties;
 import sleeper.systemtest.SystemTestProperties;
@@ -36,8 +35,7 @@ import static sleeper.configuration.properties.UserDefinedInstanceProperty.ID;
 import static sleeper.configuration.properties.UserDefinedInstanceProperty.REGION;
 
 /**
- * An {@link App} to deploy the {@link SleeperCdkApp} and the additional stacks
- * needed for the system tests.
+ * An {@link App} to deploy the additional stacks needed for system tests.
  */
 public class SystemTestApp extends Stack {
     private final InstanceProperties instanceProperties;
