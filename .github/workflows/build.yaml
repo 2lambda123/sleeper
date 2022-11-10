@@ -1,4 +1,6 @@
 name: Full Maven Compile
+on:
+  workflow_call:
 #on:
 #  push:
 #    paths:
