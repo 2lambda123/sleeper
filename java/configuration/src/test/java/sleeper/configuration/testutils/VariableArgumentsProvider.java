@@ -59,6 +59,7 @@ public class VariableArgumentsProvider implements ArgumentsProvider, AnnotationC
     private Stream<? extends Arguments> getValue(Field field, ExtensionContext context) {
         Object value;
         try {
+            field.setAccessible(true);
             value = field.get(null);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);

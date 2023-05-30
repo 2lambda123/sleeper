@@ -20,23 +20,21 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import sleeper.configuration.properties.InstanceProperties;
 import sleeper.configuration.properties.SystemDefinedInstanceProperty;
 import sleeper.configuration.properties.UserDefinedInstanceProperty;
+import sleeper.configuration.testutils.VariableSource;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static sleeper.configuration.properties.UserDefinedInstanceProperty.ACCOUNT;
@@ -56,19 +54,13 @@ class GeneratePropertiesTemplatesTest {
         GeneratePropertiesTemplates.fromRepositoryPath(tempDir);
     }
 
-    static class MandatoryInstancePropertyTemplateValues implements ArgumentsProvider {
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-            return Stream.of(
-                    Arguments.of(ID, "full-example"),
-                    Arguments.of(JARS_BUCKET, "the name of the bucket containing your jars, e.g. sleeper-<insert-unique-name-here>-jars"),
-                    Arguments.of(ACCOUNT, "1234567890"),
-                    Arguments.of(REGION, "eu-west-2"),
-                    Arguments.of(VPC_ID, "1234567890"),
-                    Arguments.of(SUBNET, "subnet-abcdefgh")
-            );
-        }
-    }
+    private static final List<Arguments> MANDATORY_INSTANCE_PROPERTY_TEMPLATE_VALUES = List.of(
+            Arguments.of(ID, "full-example"),
+            Arguments.of(JARS_BUCKET, "the name of the bucket containing your jars, e.g. sleeper-<insert-unique-name-here>-jars"),
+            Arguments.of(ACCOUNT, "1234567890"),
+            Arguments.of(REGION, "eu-west-2"),
+            Arguments.of(VPC_ID, "1234567890"),
+            Arguments.of(SUBNET, "subnet-abcdefgh"));
 
     @Nested
     @DisplayName("Generate full example instance properties")
@@ -76,7 +68,7 @@ class GeneratePropertiesTemplatesTest {
         private final InstanceProperties properties = loadFullExampleInstanceProperties();
 
         @ParameterizedTest
-        @ArgumentsSource(MandatoryInstancePropertyTemplateValues.class)
+        @VariableSource("MANDATORY_INSTANCE_PROPERTY_TEMPLATE_VALUES")
         void shouldSetMandatoryParameters(UserDefinedInstanceProperty property, String value) {
             assertThat(properties.get(property)).isEqualTo(value);
         }

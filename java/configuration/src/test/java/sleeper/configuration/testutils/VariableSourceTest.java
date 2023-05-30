@@ -28,11 +28,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VariableSourceTest {
 
-    public static final ArgumentsProvider PROVIDER = context -> Stream.of(
+    private static final ArgumentsProvider PROVIDER = context -> Stream.of(
             Arguments.of("arg-1", "arg-2")
     );
 
-    public static final List<Arguments> LIST = List.of(
+    private static final List<Arguments> LIST = List.of(
             Arguments.of("arg-1", "arg-2")
     );
 
