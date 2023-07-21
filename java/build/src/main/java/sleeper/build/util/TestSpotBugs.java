@@ -20,6 +20,9 @@ import java.nio.file.Path;
 
 public class TestSpotBugs {
 
+    private TestSpotBugs() {
+    }
+
     public static void main(String[] args) {
         Path path = Path.of(".");
         String dir = path.getParent().toString();
