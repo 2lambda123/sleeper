@@ -62,9 +62,9 @@ jobs:
         with:
           path: '**/checkstyle-result.xml'
           name: Checkstyle for ${{ steps.config.outputs.chunkName }}
-      - name: Publish Spotbugs report
+      - name: Publish SpotBugs report
         if: ${{ always() && inputs.publishReports && steps.rate-limit.outputs.remaining > 50 }}
-        uses: jwgmeligmeyling/spotbugs-github-action@v1.2
+        uses: jwgmeligmeyling/spotbugs-github-action@master
         with:
           path: '**/spotbugsXml.xml'
           name: Spotbugs for ${{ steps.config.outputs.chunkName }}
