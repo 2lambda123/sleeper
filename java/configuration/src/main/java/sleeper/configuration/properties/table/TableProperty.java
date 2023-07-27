@@ -365,6 +365,17 @@ public interface TableProperty extends SleeperProperty {
                     "in the Sleeper table.")
             .propertyGroup(TablePropertyGroup.METADATA)
             .systemDefined(true).build();
+    TableProperty FILE_IN_PARTITION_TABLENAME = Index.propertyBuilder("sleeper.table.metadata.dynamo.file-in-partition.table")
+            .description("The name of the DynamoDB table holding metadata of active files in the Sleeper table.")
+            .propertyGroup(TablePropertyGroup.METADATA)
+            .systemDefined(true)
+            .defaultProperty(ACTIVE_FILEINFO_TABLENAME).build();
+    TableProperty FILE_LIFECYCLE_TABLENAME = Index.propertyBuilder("sleeper.table.metadata.dynamo.file-lifecycle.table")
+            .description("The name of the DynamoDB table holding metadata of files ready for garbage collection " +
+                    "in the Sleeper table.")
+            .propertyGroup(TablePropertyGroup.METADATA)
+            .systemDefined(true)
+            .defaultProperty(READY_FOR_GC_FILEINFO_TABLENAME).build();
     TableProperty PARTITION_TABLENAME = Index.propertyBuilder("sleeper.table.metadata.dynamo.partition.table")
             .description("The name of the DynamoDB table holding metadata of partitions in the Sleeper table.")
             .propertyGroup(TablePropertyGroup.METADATA)
