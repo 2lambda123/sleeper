@@ -271,25 +271,116 @@ public class InMemoryFileInfoStoreTest {
         }
     }
 
-    @Test
-    public void shouldDeleteGarbageCollectedFile() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-        FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "b");
-        FileInfo newFile = factory.rootFile("newFile", 100L, "a", "b");
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFile(oldFile);
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(oldFile), newFile);
+    @Nested
+    @DisplayName("Garbage collection")
+    class GarbageCollection {
+        @Test
+        public void shouldDeleteGarbageCollectedFile() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "b");
+            FileInfo newFile = factory.rootFile("newFile", 100L, "a", "b");
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFile(oldFile);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(oldFile), newFile);
 
-        // When
-        store.deleteFileLifecycleEntries(Collections.singletonList(oldFile.getFilename()));
+            // When
+            store.deleteFileLifecycleEntries(Collections.singletonList(oldFile.getFilename()));
 
-        // Then
-        assertThat(store.getReadyForGCFiles()).isExhausted();
+            // Then
+            assertThat(store.getReadyForGCFiles()).isExhausted();
+        }
+
+        @Test
+        public void shouldReturnCorrectReadyForGCFilesIterator() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            Supplier<Instant> timeSupplier = List.of(
+                    Instant.parse("2023-07-27T14:00:00Z"), Instant.parse("2023-07-27T14:05:00Z")
+            ).iterator()::next;
+            InMemoryFileInfoStore store = new InMemoryFileInfoStore(4, timeSupplier);
+            //  - A file which should be garbage collected immediately
+            //     (NB Need to add file, which adds file-in-partition and lifecycle enrties, then simulate a compaction
+            //      to remove the file in partition entries, then set the status to ready for GC)
+            FileInfoFactory factory = FileInfoFactory.builder()
+                    .schema(schema)
+                    .partitionTree(tree)
+                    .lastStateStoreUpdate(Instant.parse("2023-07-27T14:00:00Z").minus(Duration.ofSeconds(5)))
+                    .build();
+            FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
+            FileInfo file2 = factory.rootFile("file2", 100L, "a", "b");
+            store.addFile(file1);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
+                    List.of(file1.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file2);
+            store.findFilesThatShouldHaveStatusOfGCPending();
+            //  - An active file which should not be garbage collected immediately
+            FileInfoFactory factory2 = FileInfoFactory.builder()
+                    .schema(schema)
+                    .partitionTree(tree)
+                    .lastStateStoreUpdate(Instant.parse("2023-07-27T14:05:00Z").minus(Duration.ofSeconds(5)))
+                    .build();
+            FileInfo file3 = factory2.rootFile("file3", 100L, "a", "b");
+            store.addFile(file3);
+            FileInfo file4 = factory2.rootFile("file4", 100L, "a", "b");
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
+                    List.of(file3.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file4);
+            //  - A file which is ready for garbage collection but which should not be garbage collected now as it has only
+            //      just been marked as ready for GC
+            FileInfo file5 = factory2.rootFile("file5", 100L, "a", "b");
+            store.addFile(file5);
+
+            // When / Then 1
+            List<String> readyForGCFiles = new ArrayList<>();
+            store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
+            assertThat(readyForGCFiles).hasSize(1);
+            assertThat(readyForGCFiles.get(0)).isEqualTo("file1");
+
+            // When / Then 2
+            store.findFilesThatShouldHaveStatusOfGCPending();
+            readyForGCFiles.clear();
+            store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
+            assertThat(readyForGCFiles).hasSize(2);
+            assertThat(readyForGCFiles).containsExactlyInAnyOrder("file1", "file3");
+        }
+
+        @Test
+        public void shouldFindFilesThatShouldHaveStatusOfGCPending() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
+            FileInfo file2 = factory.rootFile("file2", 100L, "a", "b");
+            FileInfo file3 = factory.rootFile("file3", 100L, "a", "b");
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFile(file1);
+            store.addFile(file2);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(file1), file3);
+
+            // When
+            store.findFilesThatShouldHaveStatusOfGCPending();
+
+            // Then
+            // - Check that file1 has status of GARBAGE_COLLECTION_PENDING
+            FileInfo fileInfoForFile1 = store.getFileLifecycleList().stream()
+                    .filter(fi -> fi.getFilename().equals("file1"))
+                    .findFirst().orElseThrow();
+            assertThat(fileInfoForFile1.getFileStatus()).isEqualTo(GARBAGE_COLLECTION_PENDING);
+            // - Check that file2 and file3 have statuses of ACTIVE
+            List<FileInfo> fileInfoForFile2 = store.getFileLifecycleList().stream()
+                    .filter(fi -> List.of("file2", "file3").contains(fi.getFilename()))
+                    .collect(Collectors.toList());
+            assertThat(fileInfoForFile2).extracting(FileInfo::getFileStatus).containsOnly(ACTIVE);
+        }
     }
 
     @Test
@@ -375,93 +466,6 @@ public class InMemoryFileInfoStoreTest {
                 file4.cloneWithStatus(ACTIVE));
         assertThat(activeFileList)
                 .containsExactlyInAnyOrder(expectedFileInfoList.toArray(new FileInfo[0]));
-    }
-
-    @Test
-    public void shouldFindFilesThatShouldHaveStatusOfGCPending() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-        FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
-        FileInfo file2 = factory.rootFile("file2", 100L, "a", "b");
-        FileInfo file3 = factory.rootFile("file3", 100L, "a", "b");
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFile(file1);
-        store.addFile(file2);
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(file1), file3);
-
-        // When
-        store.findFilesThatShouldHaveStatusOfGCPending();
-
-        // Then
-        // - Check that file1 has status of GARBAGE_COLLECTION_PENDING
-        FileInfo fileInfoForFile1 = store.getFileLifecycleList().stream()
-                .filter(fi -> fi.getFilename().equals("file1"))
-                .findFirst().orElseThrow();
-        assertThat(fileInfoForFile1.getFileStatus()).isEqualTo(GARBAGE_COLLECTION_PENDING);
-        // - Check that file2 and file3 have statuses of ACTIVE
-        List<FileInfo> fileInfoForFile2 = store.getFileLifecycleList().stream()
-                .filter(fi -> List.of("file2", "file3").contains(fi.getFilename()))
-                .collect(Collectors.toList());
-        assertThat(fileInfoForFile2).extracting(FileInfo::getFileStatus).containsOnly(ACTIVE);
-    }
-
-    @Test
-    public void shouldReturnCorrectReadyForGCFilesIterator() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        Supplier<Instant> timeSupplier = List.of(
-                Instant.parse("2023-07-27T14:00:00Z"), Instant.parse("2023-07-27T14:05:00Z")
-        ).iterator()::next;
-        InMemoryFileInfoStore store = new InMemoryFileInfoStore(4, timeSupplier);
-        //  - A file which should be garbage collected immediately
-        //     (NB Need to add file, which adds file-in-partition and lifecycle enrties, then simulate a compaction
-        //      to remove the file in partition entries, then set the status to ready for GC)
-        FileInfoFactory factory = FileInfoFactory.builder()
-                .schema(schema)
-                .partitionTree(tree)
-                .lastStateStoreUpdate(Instant.parse("2023-07-27T14:00:00Z").minus(Duration.ofSeconds(5)))
-                .build();
-        FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
-        FileInfo file2 = factory.rootFile("file2", 100L, "a", "b");
-        store.addFile(file1);
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
-                List.of(file1.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file2);
-        store.findFilesThatShouldHaveStatusOfGCPending();
-        //  - An active file which should not be garbage collected immediately
-        FileInfoFactory factory2 = FileInfoFactory.builder()
-                .schema(schema)
-                .partitionTree(tree)
-                .lastStateStoreUpdate(Instant.parse("2023-07-27T14:05:00Z").minus(Duration.ofSeconds(5)))
-                .build();
-        FileInfo file3 = factory2.rootFile("file3", 100L, "a", "b");
-        store.addFile(file3);
-        FileInfo file4 = factory2.rootFile("file4", 100L, "a", "b");
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
-                List.of(file3.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file4);
-        //  - A file which is ready for garbage collection but which should not be garbage collected now as it has only
-        //      just been marked as ready for GC
-        FileInfo file5 = factory2.rootFile("file5", 100L, "a", "b");
-        store.addFile(file5);
-
-        // When / Then 1
-        List<String> readyForGCFiles = new ArrayList<>();
-        store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
-        assertThat(readyForGCFiles).hasSize(1);
-        assertThat(readyForGCFiles.get(0)).isEqualTo("file1");
-
-        // When / Then 2
-        store.findFilesThatShouldHaveStatusOfGCPending();
-        readyForGCFiles.clear();
-        store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
-        assertThat(readyForGCFiles).hasSize(2);
-        assertThat(readyForGCFiles).containsExactlyInAnyOrder("file1", "file3");
     }
 
     @Test
