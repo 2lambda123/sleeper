@@ -21,6 +21,7 @@ import sleeper.statestore.FileInfoStore;
 import sleeper.statestore.StateStoreException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,7 +34,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static sleeper.statestore.FileInfo.FileStatus.ACTIVE;
-import static sleeper.statestore.FileInfo.FileStatus.GARBAGE_COLLECTION_PENDING;;
+import static sleeper.statestore.FileInfo.FileStatus.GARBAGE_COLLECTION_PENDING;
 
 /**
  * This class is intended for testing only. It is not thread-safe and should not be used
@@ -66,19 +67,19 @@ public class InMemoryFileInfoStore implements FileInfoStore {
 
     @Override
     public void addFiles(List<FileInfo> fileInfos) {
-        fileInfos.stream().forEach(this::addFile);
+        fileInfos.forEach(this::addFile);
     }
 
     @Override
     public synchronized void atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(List<FileInfo> fileInPartitionRecordsToBeDeleted,
-            FileInfo newActiveFile) throws StateStoreException {
+                                                                                          FileInfo newActiveFile) throws StateStoreException {
         checkAndDeleteFileInPartitionInfos(fileInPartitionRecordsToBeDeleted);
         addFile(newActiveFile);
     }
 
     @Override
     public synchronized void atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFiles(List<FileInfo> fileInPartitionRecordsToBeDeleted,
-            FileInfo leftFileInfo, FileInfo rightFileInfo) throws StateStoreException {
+                                                                                           FileInfo leftFileInfo, FileInfo rightFileInfo) throws StateStoreException {
         checkAndDeleteFileInPartitionInfos(fileInPartitionRecordsToBeDeleted);
         addFile(leftFileInfo);
         addFile(rightFileInfo);
@@ -92,8 +93,8 @@ public class InMemoryFileInfoStore implements FileInfoStore {
         }
         for (FileInfo file : fileInfos) {
             FileInfo temp = fileInPartitionEntries.get(file.getFilename()).get(file.getPartitionId()).toBuilder()
-                .jobId(jobId)
-                .build();
+                    .jobId(jobId)
+                    .build();
             fileInPartitionEntries.get(file.getFilename()).put(file.getPartitionId(), temp);
         }
     }
@@ -110,7 +111,7 @@ public class InMemoryFileInfoStore implements FileInfoStore {
 
     @Override
     public void deleteFileLifecycleEntries(List<String> filenames) throws StateStoreException {
-        filenames.stream().forEach(this::deleteReadyForGCFile);
+        filenames.forEach(this::deleteReadyForGCFile);
     }
 
     private void deleteReadyForGCFile(String filename) {
@@ -120,9 +121,9 @@ public class InMemoryFileInfoStore implements FileInfoStore {
     @Override
     public List<FileInfo> getFileInPartitionList() {
         return fileInPartitionEntries.values().stream()
-            .map(map -> map.values())
-            .flatMap(c -> c.stream())
-            .collect(Collectors.toList());
+                .map(Map::values)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -133,8 +134,8 @@ public class InMemoryFileInfoStore implements FileInfoStore {
     @Override
     public List<FileInfo> getActiveFileList() throws StateStoreException {
         return fileLifecycleEntries.values().stream()
-            .filter(f -> f.getFileStatus().equals(ACTIVE))
-            .collect(Collectors.toList());
+                .filter(f -> f.getFileStatus().equals(ACTIVE))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -151,8 +152,8 @@ public class InMemoryFileInfoStore implements FileInfoStore {
         long delayInMilliseconds = 1000L * garbageCollectorDelayBeforeDeletionInSeconds;
         long deleteTime = System.currentTimeMillis() - delayInMilliseconds;
         return fileLifecycleEntries.values().stream()
-            .filter(f -> f.getFileStatus().equals(GARBAGE_COLLECTION_PENDING))
-            .filter(f -> (f.getLastStateStoreUpdateTime() < deleteTime));
+                .filter(f -> f.getFileStatus().equals(GARBAGE_COLLECTION_PENDING))
+                .filter(f -> (f.getLastStateStoreUpdateTime() < deleteTime));
     }
 
     @Override
@@ -199,7 +200,7 @@ public class InMemoryFileInfoStore implements FileInfoStore {
         }
         if (!failures.isEmpty()) {
             throw new StateStoreException("Some of the provided fileInPartitionRecordsToBeDeleted do not have the correct"
-                + " file-in-partition entries" + failures);
+                    + " file-in-partition entries" + failures);
         }
 
         // Delete the records

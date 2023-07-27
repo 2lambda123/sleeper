@@ -15,6 +15,8 @@
  */
 package sleeper.statestore.inmemory;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import sleeper.core.key.Key;
@@ -48,217 +50,223 @@ import static sleeper.statestore.FileInfo.FileStatus.GARBAGE_COLLECTION_PENDING;
 
 public class InMemoryFileInfoStoreTest {
 
-    @Test
-    public void shouldAddAndReadActiveFiles() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder()
-                .schema(schema)
-                .partitionTree(tree)
-                .lastStateStoreUpdate(Instant.now())
-                .build();
-        FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
-        FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
-        FileInfo file3 = factory.rootFile("file3", 100L, "e", "f");
+    @Nested
+    @DisplayName("Add files to store")
+    class AddFiles {
+        @Test
+        public void shouldAddAndReadActiveFiles() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder()
+                    .schema(schema)
+                    .partitionTree(tree)
+                    .lastStateStoreUpdate(Instant.now())
+                    .build();
+            FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
+            FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
+            FileInfo file3 = factory.rootFile("file3", 100L, "e", "f");
 
-        // When
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFile(file1);
-        store.addFiles(Arrays.asList(file2, file3));
+            // When
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFile(file1);
+            store.addFiles(Arrays.asList(file2, file3));
 
-        // Then
-        List<FileInfo> fileInfoFileInPartitionList = Arrays.asList(
-                file1.cloneWithStatus(FileStatus.FILE_IN_PARTITION),
-                file2.cloneWithStatus(FileStatus.FILE_IN_PARTITION),
-                file3.cloneWithStatus(FileStatus.FILE_IN_PARTITION));
-        assertThat(store.getFileInPartitionList()).containsExactlyInAnyOrder(fileInfoFileInPartitionList.toArray(new FileInfo[]{}));
-        assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactlyInAnyOrder(fileInfoFileInPartitionList.toArray(new FileInfo[]{}));
-        assertThat(store.getReadyForGCFiles()).isExhausted();
-        assertThat(store.getPartitionToFileInPartitionMap())
-                .containsOnlyKeys("root")
-                .hasEntrySatisfying("root", files ->
-                        assertThat(files).containsExactlyInAnyOrder("file1", "file2", "file3"));
-    }
+            // Then
+            assertThat(store.getFileInPartitionList())
+                    .containsExactlyInAnyOrder(file1, file2, file3);
+            assertThat(store.getFileInPartitionInfosWithNoJobId())
+                    .containsExactlyInAnyOrder(file1, file2, file3);
+            assertThat(store.getReadyForGCFiles()).isExhausted();
+            assertThat(store.getPartitionToFileInPartitionMap())
+                    .containsOnlyKeys("root")
+                    .hasEntrySatisfying("root", files ->
+                            assertThat(files).containsExactlyInAnyOrder("file1", "file2", "file3"));
+        }
 
-    @Test
-    public void testExceptionThrownWhenAddingFileInfoWithMissingFilename() throws StateStoreException {
-        // Given
-        FileInfoStore store = new InMemoryFileInfoStore();
-        FileInfo fileInfo = FileInfo.builder()
-                .rowKeyTypes(new LongType())
-                .fileStatus(FileInfo.FileStatus.ACTIVE)
-                .partitionId("1")
-                .numberOfRecords(1000L)
-                .minRowKey(Key.create(1L))
-                .maxRowKey(Key.create(10L))
-                .lastStateStoreUpdateTime(1_000_000L)
-                .build();
-
-        // When / Then
-        assertThatThrownBy(() -> store.addFile(fileInfo))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    public void shouldAtomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-        FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "b");
-        FileInfo newFile = factory.rootFile("newFile", 100L, "a", "b");
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFile(oldFile);
-
-        // When
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(oldFile), newFile);
-
-        // Then
-        assertThat(store.getFileInPartitionList()).containsExactly(newFile.cloneWithStatus(FILE_IN_PARTITION));
-        assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactly(newFile.cloneWithStatus(FILE_IN_PARTITION));
-        assertThat(store.getPartitionToFileInPartitionMap())
-                .containsOnlyKeys("root")
-                .hasEntrySatisfying("root", files ->
-                        assertThat(files).containsExactly("newFile"));
-    }
-
-    @Test
-    public void shouldAtomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFiles() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-        FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "c");
-        FileInfo newLeftFile = factory.rootFile("newLeftFile", 100L, "a", "b");
-        FileInfo newRightFile = factory.rootFile("newRightFile", 100L, "b", "c");
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFile(oldFile);
-
-        // When
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFiles(Collections.singletonList(oldFile), newLeftFile, newRightFile);
-
-        // Then
-        newLeftFile = newLeftFile.cloneWithStatus(FILE_IN_PARTITION);
-        newRightFile = newRightFile.cloneWithStatus(FILE_IN_PARTITION);
-        assertThat(store.getFileInPartitionList()).containsExactlyInAnyOrder(newLeftFile, newRightFile);
-        assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactlyInAnyOrder(newLeftFile, newRightFile);
-        assertThat(store.getPartitionToFileInPartitionMap())
-                .containsOnlyKeys("root")
-                .hasEntrySatisfying("root", files ->
-                        assertThat(files).containsExactlyInAnyOrder("newLeftFile", "newRightFile"));
-    }
-
-    @Test
-    public void atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFileShouldFailIfFileInPartitionRecordDoesntExist() throws StateStoreException {
-        // Given
-        FileInfoStore store = new InMemoryFileInfoStore();
-        List<FileInfo> files = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
+        @Test
+        public void shouldThrowExceptionThrownWhenAddingFileInfoWithMissingFilename() {
+            // Given
+            FileInfoStore store = new InMemoryFileInfoStore();
             FileInfo fileInfo = FileInfo.builder()
                     .rowKeyTypes(new LongType())
-                    .filename("file" + i)
+                    .fileStatus(FileInfo.FileStatus.ACTIVE)
+                    .partitionId("1")
+                    .numberOfRecords(1000L)
+                    .minRowKey(Key.create(1L))
+                    .maxRowKey(Key.create(10L))
+                    .lastStateStoreUpdateTime(1_000_000L)
+                    .build();
+
+            // When / Then
+            assertThatThrownBy(() -> store.addFile(fileInfo))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("Atomically remove file-in-partition records and create new active file")
+    class AtomicallyRemoveFilesAndCreateNewActiveFiles {
+        @Test
+        public void shouldRemoveOneFileInPartitionRecordAndCreateNewActiveFile() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "b");
+            FileInfo newFile = factory.rootFile("newFile", 100L, "a", "b");
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFile(oldFile);
+
+            // When
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(oldFile), newFile);
+
+            // Then
+            assertThat(store.getFileInPartitionList()).containsExactly(newFile.cloneWithStatus(FILE_IN_PARTITION));
+            assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactly(newFile.cloneWithStatus(FILE_IN_PARTITION));
+            assertThat(store.getPartitionToFileInPartitionMap())
+                    .containsOnlyKeys("root")
+                    .hasEntrySatisfying("root", files ->
+                            assertThat(files).containsExactly("newFile"));
+        }
+
+        @Test
+        public void shouldRemoveOneFileInPartitionRecordAndCreateMultipleNewActiveFiles() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "c");
+            FileInfo newLeftFile = factory.rootFile("newLeftFile", 100L, "a", "b");
+            FileInfo newRightFile = factory.rootFile("newRightFile", 100L, "b", "c");
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFile(oldFile);
+
+            // When
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFiles(
+                    List.of(oldFile), newLeftFile, newRightFile);
+
+            // Then
+            newLeftFile = newLeftFile.cloneWithStatus(FILE_IN_PARTITION);
+            newRightFile = newRightFile.cloneWithStatus(FILE_IN_PARTITION);
+            assertThat(store.getFileInPartitionList()).containsExactlyInAnyOrder(newLeftFile, newRightFile);
+            assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactlyInAnyOrder(newLeftFile, newRightFile);
+            assertThat(store.getPartitionToFileInPartitionMap())
+                    .containsOnlyKeys("root")
+                    .hasEntrySatisfying("root", files ->
+                            assertThat(files).containsExactlyInAnyOrder("newLeftFile", "newRightFile"));
+        }
+
+        @Test
+        public void shouldFailIfFileInPartitionRecordDoesntExist() {
+            // Given
+            FileInfoStore store = new InMemoryFileInfoStore();
+            List<FileInfo> files = List.of(FileInfo.builder()
+                    .rowKeyTypes(new LongType())
+                    .filename("file")
                     .fileStatus(FileInfo.FileStatus.ACTIVE)
                     .partitionId("7")
                     .numberOfRecords(1000L)
                     .minRowKey(Key.create(1L))
                     .maxRowKey(Key.create(10L))
+                    .build());
+            FileInfo newFileInfo = FileInfo.builder()
+                    .rowKeyTypes(new LongType())
+                    .filename("file-new")
+                    .fileStatus(FileInfo.FileStatus.ACTIVE)
+                    .partitionId("7")
+                    .numberOfRecords(5000L)
                     .build();
-            files.add(fileInfo);
+
+            // When / Then
+            assertThatThrownBy(() ->
+                    store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(files, newFileInfo))
+                    .isInstanceOf(StateStoreException.class);
         }
-        store.addFiles(files);
-        FileInfo newFileInfo = FileInfo.builder()
-                .rowKeyTypes(new LongType())
-                .filename("file-new")
-                .fileStatus(FileInfo.FileStatus.ACTIVE)
-                .partitionId("7")
-                .numberOfRecords(5000L)
-                .build();
-        //  - One of the file-in-partition entries is removed
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(files.get(3)), newFileInfo);
-
-        // When / Then
-        assertThatThrownBy(() ->
-                store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(files, newFileInfo))
-                .isInstanceOf(StateStoreException.class);
     }
 
-    @Test
-    public void shouldAtomicallyUpdateJobStatusOfFiles() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-        FileInfo file = factory.rootFile("file", 100L, "a", "b");
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFile(file);
+    @Nested
+    @DisplayName("Atomically update job status of files")
+    class AtomicallyUpdateJobStatusOfFiles {
+        @Test
+        public void shouldMarkFileWithJobId() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfo file = factory.rootFile("file", 100L, "a", "b");
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFile(file);
 
-        // When
-        store.atomicallyUpdateJobStatusOfFiles("job", Collections.singletonList(file));
+            // When
+            store.atomicallyUpdateJobStatusOfFiles("job", Collections.singletonList(file));
 
-        // Then
-        assertThat(store.getFileInPartitionList()).containsExactly(file.toBuilder().jobId("job").fileStatus(FILE_IN_PARTITION).build());
-        assertThat(store.getFileInPartitionInfosWithNoJobId()).isEmpty();
-    }
+            // Then
+            assertThat(store.getFileInPartitionList())
+                    .containsExactly(file.toBuilder().jobId("job").fileStatus(FILE_IN_PARTITION).build());
+            assertThat(store.getFileInPartitionInfosWithNoJobId()).isEmpty();
+        }
 
-    @Test
-    public void shouldNotMarkFileWithJobIdWhenOneIsAlreadySet() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-        FileInfo file = factory.rootFile("file", 100L, "a", "b");
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFile(file);
-        store.atomicallyUpdateJobStatusOfFiles("job1", Collections.singletonList(file));
+        @Test
+        public void shouldNotMarkFileWithJobIdWhenOneIsAlreadySet() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfo file = factory.rootFile("file", 100L, "a", "b");
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFile(file);
+            store.atomicallyUpdateJobStatusOfFiles("job1", Collections.singletonList(file));
 
-        // When / Then
-        assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", Collections.singletonList(file)))
-                .isInstanceOf(StateStoreException.class);
-        assertThat(store.getFileInPartitionList()).containsExactly(file.toBuilder().jobId("job1").fileStatus(FILE_IN_PARTITION).build());
-        assertThat(store.getFileInPartitionInfosWithNoJobId()).isEmpty();
-    }
+            // When / Then
+            assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", Collections.singletonList(file)))
+                    .isInstanceOf(StateStoreException.class);
+            assertThat(store.getFileInPartitionList())
+                    .containsExactly(file.toBuilder().jobId("job1").fileStatus(FILE_IN_PARTITION).build());
+            assertThat(store.getFileInPartitionInfosWithNoJobId()).isEmpty();
+        }
 
-    @Test
-    public void shouldNotUpdateOtherFilesIfOneFileAlreadyHasJobId() throws Exception {
-        // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-        FileInfo file1 = factory.rootFile("file1", 100L, "a", "b")
-                .toBuilder()
-                .fileStatus(FileStatus.FILE_IN_PARTITION)
-                .build();
-        FileInfo file2 = factory.rootFile("file2", 100L, "c", "d")
-                .toBuilder()
-                .fileStatus(FileStatus.FILE_IN_PARTITION)
-                .build();
-        FileInfo file3 = factory.rootFile("file3", 100L, "e", "f")
-                .toBuilder()
-                .fileStatus(FileStatus.FILE_IN_PARTITION)
-                .build();
-        FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFiles(Arrays.asList(file1, file2, file3));
-        store.atomicallyUpdateJobStatusOfFiles("job1", Collections.singletonList(file2));
+        @Test
+        public void shouldNotUpdateOtherFilesIfOneFileAlreadyHasJobId() throws Exception {
+            // Given
+            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
+            PartitionTree tree = new PartitionsBuilder(schema)
+                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                    .buildTree();
+            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfo file1 = factory.rootFile("file1", 100L, "a", "b")
+                    .toBuilder()
+                    .fileStatus(FileStatus.FILE_IN_PARTITION)
+                    .build();
+            FileInfo file2 = factory.rootFile("file2", 100L, "c", "d")
+                    .toBuilder()
+                    .fileStatus(FileStatus.FILE_IN_PARTITION)
+                    .build();
+            FileInfo file3 = factory.rootFile("file3", 100L, "e", "f")
+                    .toBuilder()
+                    .fileStatus(FileStatus.FILE_IN_PARTITION)
+                    .build();
+            FileInfoStore store = new InMemoryFileInfoStore();
+            store.addFiles(Arrays.asList(file1, file2, file3));
+            store.atomicallyUpdateJobStatusOfFiles("job1", Collections.singletonList(file2));
 
-        // When / Then
-        assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", Arrays.asList(file1, file2, file3)))
-                .isInstanceOf(StateStoreException.class);
-        assertThat(store.getFileInPartitionList()).containsExactlyInAnyOrder(
-                file1, file2.toBuilder().jobId("job1").build(), file3);
-        assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactlyInAnyOrder(file1, file3);
+            // When / Then
+            assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", Arrays.asList(file1, file2, file3)))
+                    .isInstanceOf(StateStoreException.class);
+            assertThat(store.getFileInPartitionList()).containsExactlyInAnyOrder(
+                    file1, file2.toBuilder().jobId("job1").build(), file3);
+            assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactlyInAnyOrder(file1, file3);
+        }
     }
 
     @Test
@@ -389,13 +397,12 @@ public class InMemoryFileInfoStoreTest {
         // Then
         // - Check that file1 has status of GARBAGE_COLLECTION_PENDING
         FileInfo fileInfoForFile1 = store.getFileLifecycleList().stream()
-                .filter(fi -> fi.getFilename().equals(file1.getFilename()))
-                .findFirst()
-                .get();
+                .filter(fi -> fi.getFilename().equals("file1"))
+                .findFirst().orElseThrow();
         assertThat(fileInfoForFile1.getFileStatus()).isEqualTo(GARBAGE_COLLECTION_PENDING);
         // - Check that file2 and file3 have statuses of ACTIVE
         List<FileInfo> fileInfoForFile2 = store.getFileLifecycleList().stream()
-                .filter(fi -> fi.getFilename().equals(file2.getFilename()) || fi.getFilename().equals(file3.getFilename()))
+                .filter(fi -> List.of("file2", "file3").contains(fi.getFilename()))
                 .collect(Collectors.toList());
         assertThat(fileInfoForFile2).extracting(FileInfo::getFileStatus).containsOnly(ACTIVE);
     }
