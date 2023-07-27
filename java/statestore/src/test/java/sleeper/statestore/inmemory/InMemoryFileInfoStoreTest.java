@@ -26,7 +26,6 @@ import sleeper.core.schema.Schema;
 import sleeper.core.schema.type.LongType;
 import sleeper.core.schema.type.StringType;
 import sleeper.statestore.FileInfo;
-import sleeper.statestore.FileInfo.FileStatus;
 import sleeper.statestore.FileInfoFactory;
 import sleeper.statestore.FileInfoStore;
 import sleeper.statestore.StateStoreException;
@@ -46,7 +45,6 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static sleeper.statestore.FileInfo.FileStatus.ACTIVE;
-import static sleeper.statestore.FileInfo.FileStatus.FILE_IN_PARTITION;
 import static sleeper.statestore.FileInfo.FileStatus.GARBAGE_COLLECTION_PENDING;
 
 public class InMemoryFileInfoStoreTest {
@@ -113,11 +111,11 @@ public class InMemoryFileInfoStoreTest {
             store.addFile(oldFile);
 
             // When
-            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(oldFile), newFile);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(List.of(oldFile), newFile);
 
             // Then
-            assertThat(store.getFileInPartitionList()).containsExactly(newFile.cloneWithStatus(FILE_IN_PARTITION));
-            assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactly(newFile.cloneWithStatus(FILE_IN_PARTITION));
+            assertThat(store.getFileInPartitionList()).containsExactly(newFile);
+            assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactly(newFile);
             assertThat(store.getPartitionToFileInPartitionMap())
                     .containsOnlyKeys("root")
                     .hasEntrySatisfying("root", files ->
@@ -139,10 +137,10 @@ public class InMemoryFileInfoStoreTest {
                     List.of(oldFile), newLeftFile, newRightFile);
 
             // Then
-            newLeftFile = newLeftFile.cloneWithStatus(FILE_IN_PARTITION);
-            newRightFile = newRightFile.cloneWithStatus(FILE_IN_PARTITION);
-            assertThat(store.getFileInPartitionList()).containsExactlyInAnyOrder(newLeftFile, newRightFile);
-            assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactlyInAnyOrder(newLeftFile, newRightFile);
+            assertThat(store.getFileInPartitionList())
+                    .containsExactlyInAnyOrder(newLeftFile, newRightFile);
+            assertThat(store.getFileInPartitionInfosWithNoJobId())
+                    .containsExactlyInAnyOrder(newLeftFile, newRightFile);
             assertThat(store.getPartitionToFileInPartitionMap())
                     .containsOnlyKeys("root")
                     .hasEntrySatisfying("root", files ->
@@ -189,11 +187,11 @@ public class InMemoryFileInfoStoreTest {
             store.addFile(file);
 
             // When
-            store.atomicallyUpdateJobStatusOfFiles("job", Collections.singletonList(file));
+            store.atomicallyUpdateJobStatusOfFiles("job", List.of(file));
 
             // Then
             assertThat(store.getFileInPartitionList())
-                    .containsExactly(file.toBuilder().jobId("job").fileStatus(FILE_IN_PARTITION).build());
+                    .containsExactly(file.toBuilder().jobId("job").build());
             assertThat(store.getFileInPartitionInfosWithNoJobId()).isEmpty();
         }
 
@@ -207,10 +205,10 @@ public class InMemoryFileInfoStoreTest {
             store.atomicallyUpdateJobStatusOfFiles("job1", Collections.singletonList(file));
 
             // When / Then
-            assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", Collections.singletonList(file)))
+            assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", List.of(file)))
                     .isInstanceOf(StateStoreException.class);
             assertThat(store.getFileInPartitionList())
-                    .containsExactly(file.toBuilder().jobId("job1").fileStatus(FILE_IN_PARTITION).build());
+                    .containsExactly(file.toBuilder().jobId("job1").build());
             assertThat(store.getFileInPartitionInfosWithNoJobId()).isEmpty();
         }
 
@@ -226,11 +224,12 @@ public class InMemoryFileInfoStoreTest {
             store.atomicallyUpdateJobStatusOfFiles("job1", Collections.singletonList(file2));
 
             // When / Then
-            assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", Arrays.asList(file1, file2, file3)))
+            assertThatThrownBy(() -> store.atomicallyUpdateJobStatusOfFiles("job2", List.of(file1, file2, file3)))
                     .isInstanceOf(StateStoreException.class);
-            assertThat(store.getFileInPartitionList()).containsExactlyInAnyOrder(
-                    file1, file2.toBuilder().jobId("job1").build(), file3);
-            assertThat(store.getFileInPartitionInfosWithNoJobId()).containsExactlyInAnyOrder(file1, file3);
+            assertThat(store.getFileInPartitionList())
+                    .containsExactlyInAnyOrder(file1, file2.toBuilder().jobId("job1").build(), file3);
+            assertThat(store.getFileInPartitionInfosWithNoJobId())
+                    .containsExactlyInAnyOrder(file1, file3);
         }
     }
 
@@ -245,10 +244,10 @@ public class InMemoryFileInfoStoreTest {
             FileInfo newFile = factory.rootFile("newFile", 100L, "a", "b");
             FileInfoStore store = new InMemoryFileInfoStore();
             store.addFile(oldFile);
-            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(oldFile), newFile);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(List.of(oldFile), newFile);
 
             // When
-            store.deleteFileLifecycleEntries(Collections.singletonList(oldFile.getFilename()));
+            store.deleteFileLifecycleEntries(List.of(oldFile.getFilename()));
 
             // Then
             assertThat(store.getReadyForGCFiles()).isExhausted();
@@ -262,26 +261,25 @@ public class InMemoryFileInfoStoreTest {
             ).iterator()::next;
             InMemoryFileInfoStore store = new InMemoryFileInfoStore(4, timeSupplier);
             //  - A file which should be garbage collected immediately
-            //     (NB Need to add file, which adds file-in-partition and lifecycle enrties, then simulate a compaction
-            //      to remove the file in partition entries, then set the status to ready for GC)
+            //     (NB Need to add file, which adds file-in-partition and lifecycle entries,
+            //     then simulate a compaction to remove the file in partition entries
+            //     then set the status to ready for GC)
             FileInfoFactory factory = defaultFactoryBuilder()
                     .lastStateStoreUpdate(Instant.parse("2023-07-27T14:00:00Z").minus(Duration.ofSeconds(5)))
                     .build();
             FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
             FileInfo file2 = factory.rootFile("file2", 100L, "a", "b");
             store.addFile(file1);
-            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
-                    List.of(file1.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file2);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(List.of(file1), file2);
             store.findFilesThatShouldHaveStatusOfGCPending();
             //  - An active file which should not be garbage collected immediately
             FileInfoFactory factory2 = defaultFactoryBuilder()
                     .lastStateStoreUpdate(Instant.parse("2023-07-27T14:05:00Z").minus(Duration.ofSeconds(5)))
                     .build();
             FileInfo file3 = factory2.rootFile("file3", 100L, "a", "b");
-            store.addFile(file3);
             FileInfo file4 = factory2.rootFile("file4", 100L, "a", "b");
-            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
-                    List.of(file3.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file4);
+            store.addFile(file3);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(List.of(file3), file4);
             //  - A file which is ready for garbage collection but which should not be garbage collected now as it has only
             //      just been marked as ready for GC
             FileInfo file5 = factory2.rootFile("file5", 100L, "a", "b");
@@ -290,14 +288,12 @@ public class InMemoryFileInfoStoreTest {
             // When / Then 1
             List<String> readyForGCFiles = new ArrayList<>();
             store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
-            assertThat(readyForGCFiles).hasSize(1);
-            assertThat(readyForGCFiles.get(0)).isEqualTo("file1");
+            assertThat(readyForGCFiles).containsExactly("file1");
 
             // When / Then 2
             store.findFilesThatShouldHaveStatusOfGCPending();
             readyForGCFiles.clear();
             store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
-            assertThat(readyForGCFiles).hasSize(2);
             assertThat(readyForGCFiles).containsExactlyInAnyOrder("file1", "file3");
         }
 
@@ -311,22 +307,22 @@ public class InMemoryFileInfoStoreTest {
             FileInfoStore store = new InMemoryFileInfoStore();
             store.addFile(file1);
             store.addFile(file2);
-            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(file1), file3);
+            store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(List.of(file1), file3);
 
             // When
             store.findFilesThatShouldHaveStatusOfGCPending();
 
             // Then
             // - Check that file1 has status of GARBAGE_COLLECTION_PENDING
-            FileInfo fileInfoForFile1 = store.getFileLifecycleList().stream()
-                    .filter(fi -> fi.getFilename().equals("file1"))
-                    .findFirst().orElseThrow();
-            assertThat(fileInfoForFile1.getFileStatus()).isEqualTo(GARBAGE_COLLECTION_PENDING);
+            assertThat(store.getFileLifecycleList().stream()
+                    .filter(fi -> fi.getFileStatus().equals(GARBAGE_COLLECTION_PENDING))
+                    .map(FileInfo::getFilename))
+                    .containsExactlyInAnyOrder("file1");
             // - Check that file2 and file3 have statuses of ACTIVE
-            List<FileInfo> fileInfoForFile2 = store.getFileLifecycleList().stream()
-                    .filter(fi -> List.of("file2", "file3").contains(fi.getFilename()))
-                    .collect(Collectors.toList());
-            assertThat(fileInfoForFile2).extracting(FileInfo::getFileStatus).containsOnly(ACTIVE);
+            assertThat(store.getFileLifecycleList().stream()
+                    .filter(fi -> fi.getFileStatus().equals(ACTIVE))
+                    .map(FileInfo::getFilename))
+                    .containsExactlyInAnyOrder("file2", "file3");
         }
     }
 
@@ -338,18 +334,11 @@ public class InMemoryFileInfoStoreTest {
         FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
         FileInfo file3 = factory.rootFile("file3", 200L, "e", "f");
         FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFiles(Arrays.asList(file1, file2, file3));
+        store.addFiles(List.of(file1, file2, file3));
 
-        // When
-        List<FileInfo> fileLifecycleList = store.getFileInPartitionList();
-
-        // Then
-        List<FileInfo> expectedFileInfoList = Arrays.asList(
-                file1.cloneWithStatus(FILE_IN_PARTITION),
-                file2.cloneWithStatus(FILE_IN_PARTITION),
-                file3.cloneWithStatus(FILE_IN_PARTITION));
-        assertThat(fileLifecycleList)
-                .containsExactlyInAnyOrder(expectedFileInfoList.toArray(new FileInfo[0]));
+        // When / Then
+        assertThat(store.getFileInPartitionList())
+                .containsExactlyInAnyOrder(file1, file2, file3);
     }
 
     @Test
@@ -360,18 +349,15 @@ public class InMemoryFileInfoStoreTest {
         FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
         FileInfo file3 = factory.rootFile("file3", 200L, "e", "f");
         FileInfoStore store = new InMemoryFileInfoStore();
-        store.addFiles(Arrays.asList(file1, file2, file3));
+        List<FileInfo> allFiles = List.of(file1, file2, file3);
+        store.addFiles(allFiles);
 
-        // When
-        List<FileInfo> fileLifecycleList = store.getFileLifecycleList();
-
-        // Then
-        List<FileInfo> expectedFileInfoList = Arrays.asList(
-                file1.cloneWithStatus(FileStatus.ACTIVE),
-                file2.cloneWithStatus(FileStatus.ACTIVE),
-                file3.cloneWithStatus(FileStatus.ACTIVE));
-        assertThat(fileLifecycleList)
-                .containsExactlyInAnyOrder(expectedFileInfoList.toArray(new FileInfo[0]));
+        // When / Then
+        List<FileInfo> expectedFileInfoList = allFiles.stream()
+                .map(file -> file.cloneWithStatus(ACTIVE))
+                .collect(Collectors.toList());
+        assertThat(store.getFileLifecycleList())
+                .containsExactlyInAnyOrderElementsOf(expectedFileInfoList);
     }
 
     @Test
