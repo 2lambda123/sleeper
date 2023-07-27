@@ -32,6 +32,7 @@ import sleeper.statestore.FileInfoFactory;
 import sleeper.statestore.FileInfoStore;
 import sleeper.statestore.StateStoreException;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -414,39 +416,41 @@ public class InMemoryFileInfoStoreTest {
         PartitionTree tree = new PartitionsBuilder(schema)
                 .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
                 .buildTree();
-        FileInfoStore store = new InMemoryFileInfoStore(4);
+        Supplier<Instant> timeSupplier = List.of(
+                Instant.parse("2023-07-27T14:00:00Z"), Instant.parse("2023-07-27T14:05:00Z")
+        ).iterator()::next;
+        InMemoryFileInfoStore store = new InMemoryFileInfoStore(4, timeSupplier);
         //  - A file which should be garbage collected immediately
         //     (NB Need to add file, which adds file-in-partition and lifecycle enrties, then simulate a compaction
         //      to remove the file in partition entries, then set the status to ready for GC)
         FileInfoFactory factory = FileInfoFactory.builder()
                 .schema(schema)
                 .partitionTree(tree)
-                .lastStateStoreUpdate(Instant.ofEpochMilli(System.currentTimeMillis() - 8000))
+                .lastStateStoreUpdate(Instant.parse("2023-07-27T14:00:00Z").minus(Duration.ofSeconds(5)))
                 .build();
         FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
         FileInfo file2 = factory.rootFile("file2", 100L, "a", "b");
         store.addFile(file1);
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(file1.cloneWithStatus(FileStatus.FILE_IN_PARTITION)),
-                file2);
+        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
+                List.of(file1.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file2);
         store.findFilesThatShouldHaveStatusOfGCPending();
         //  - An active file which should not be garbage collected immediately
         FileInfoFactory factory2 = FileInfoFactory.builder()
                 .schema(schema)
                 .partitionTree(tree)
-                .lastStateStoreUpdate(Instant.ofEpochMilli(System.currentTimeMillis() + 4000L))
+                .lastStateStoreUpdate(Instant.parse("2023-07-27T14:05:00Z").minus(Duration.ofSeconds(5)))
                 .build();
         FileInfo file3 = factory2.rootFile("file3", 100L, "a", "b");
         store.addFile(file3);
         FileInfo file4 = factory2.rootFile("file4", 100L, "a", "b");
-        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(Collections.singletonList(file3.cloneWithStatus(FileStatus.FILE_IN_PARTITION)),
-                file4);
+        store.atomicallyRemoveFileInPartitionRecordsAndCreateNewActiveFile(
+                List.of(file3.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file4);
         //  - A file which is ready for garbage collection but which should not be garbage collected now as it has only
         //      just been marked as ready for GC
         FileInfo file5 = factory2.rootFile("file5", 100L, "a", "b");
         store.addFile(file5);
 
         // When / Then 1
-        Thread.sleep(5000L);
         List<String> readyForGCFiles = new ArrayList<>();
         store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
         assertThat(readyForGCFiles).hasSize(1);
@@ -454,11 +458,10 @@ public class InMemoryFileInfoStoreTest {
 
         // When / Then 2
         store.findFilesThatShouldHaveStatusOfGCPending();
-        Thread.sleep(5000L);
         readyForGCFiles.clear();
         store.getReadyForGCFiles().forEachRemaining(readyForGCFiles::add);
         assertThat(readyForGCFiles).hasSize(2);
-        assertThat(readyForGCFiles.stream().collect(Collectors.toSet())).containsExactlyInAnyOrder("file1", "file3");
+        assertThat(readyForGCFiles).containsExactlyInAnyOrder("file1", "file3");
     }
 
     @Test
