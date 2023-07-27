@@ -119,7 +119,7 @@ public class InMemoryFileInfoStore implements FileInfoStore {
     }
 
     @Override
-    public void deleteFileLifecycleEntries(List<String> filenames) throws StateStoreException {
+    public void deleteFileLifecycleEntries(List<String> filenames) {
         filenames.forEach(this::deleteReadyForGCFile);
     }
 
@@ -166,7 +166,7 @@ public class InMemoryFileInfoStore implements FileInfoStore {
     }
 
     @Override
-    public void findFilesThatShouldHaveStatusOfGCPending() throws StateStoreException {
+    public void findFilesThatShouldHaveStatusOfGCPending() {
         // Identify any files which have lifecycle records that do not have any
         // file-in-partition records.
         Set<String> allFilesWithLifecycleEntries = new HashSet<>(fileLifecycleEntries.keySet());

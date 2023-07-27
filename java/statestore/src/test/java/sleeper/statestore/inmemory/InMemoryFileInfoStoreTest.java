@@ -109,7 +109,7 @@ public class InMemoryFileInfoStoreTest {
     }
 
     @Nested
-    @DisplayName("Atomically remove file-in-partition records and create new active file")
+    @DisplayName("Atomically remove file-in-partition records and create new active files")
     class AtomicallyRemoveFilesAndCreateNewActiveFiles {
         @Test
         public void shouldRemoveOneFileInPartitionRecordAndCreateNewActiveFile() throws Exception {
