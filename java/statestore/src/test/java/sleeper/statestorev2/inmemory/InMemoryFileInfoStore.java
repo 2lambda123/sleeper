@@ -20,13 +20,16 @@ import sleeper.statestorev2.FileInfo.FileStatus;
 import sleeper.statestorev2.FileInfoStore;
 import sleeper.statestorev2.StateStoreException;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,14 +45,20 @@ import static sleeper.statestorev2.FileInfo.FileStatus.GARBAGE_COLLECTION_PENDIN
 public class InMemoryFileInfoStore implements FileInfoStore {
     private final Map<String, Map<String, FileInfo>> fileInPartitionEntries = new HashMap<>(); // filename -> partition id -> fileinfo
     private final Map<String, FileInfo> fileLifecycleEntries = new HashMap<>();
-    private final long garbageCollectorDelayBeforeDeletionInSeconds;
+    private final long gcDelayInSeconds;
+    private final Supplier<Instant> timeSupplier;
 
-    public InMemoryFileInfoStore(long garbageCollectorDelayBeforeDeletionInSeconds) {
-        this.garbageCollectorDelayBeforeDeletionInSeconds = garbageCollectorDelayBeforeDeletionInSeconds;
+    public InMemoryFileInfoStore(long gcDelayInSeconds) {
+        this(gcDelayInSeconds, Instant::now);
+    }
+
+    public InMemoryFileInfoStore(long gcDelayInSeconds, Supplier<Instant> timeSupplier) {
+        this.gcDelayInSeconds = gcDelayInSeconds;
+        this.timeSupplier = timeSupplier;
     }
 
     public InMemoryFileInfoStore() {
-        this(Long.MAX_VALUE);
+        this(Long.MAX_VALUE, Instant::now);
     }
 
     @Override
@@ -60,13 +69,14 @@ public class InMemoryFileInfoStore implements FileInfoStore {
             throw new IllegalArgumentException("FileInfo needs non-null filename, partition, number of records: got " + fileInfo);
         }
         fileInPartitionEntries.putIfAbsent(fileInfo.getFilename(), new HashMap<>());
-        fileInPartitionEntries.get(fileInfo.getFilename()).put(fileInfo.getPartitionId(), fileInfo.cloneWithStatus(FileStatus.FILE_IN_PARTITION));
+        fileInPartitionEntries.get(fileInfo.getFilename())
+                .put(fileInfo.getPartitionId(), fileInfo.cloneWithStatus(FileStatus.FILE_IN_PARTITION));
         fileLifecycleEntries.put(fileInfo.getFilename(), fileInfo.cloneWithStatus(FileStatus.ACTIVE));
     }
 
     @Override
     public void addFiles(List<FileInfo> fileInfos) {
-        fileInfos.stream().forEach(this::addFile);
+        fileInfos.forEach(this::addFile);
     }
 
     @Override
@@ -109,8 +119,8 @@ public class InMemoryFileInfoStore implements FileInfoStore {
     }
 
     @Override
-    public void deleteFileLifecycleEntries(List<String> filenames) throws StateStoreException {
-        filenames.stream().forEach(this::deleteReadyForGCFile);
+    public void deleteFileLifecycleEntries(List<String> filenames) {
+        filenames.forEach(this::deleteReadyForGCFile);
     }
 
     private void deleteReadyForGCFile(String filename) {
@@ -120,18 +130,18 @@ public class InMemoryFileInfoStore implements FileInfoStore {
     @Override
     public List<FileInfo> getFileInPartitionList() {
         return fileInPartitionEntries.values().stream()
-                .map(map -> map.values())
-                .flatMap(c -> c.stream())
+                .map(Map::values)
+                .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<FileInfo> getFileLifecycleList() throws StateStoreException {
+    public List<FileInfo> getFileLifecycleList() {
         return new ArrayList<>(fileLifecycleEntries.values());
     }
 
     @Override
-    public List<FileInfo> getActiveFileList() throws StateStoreException {
+    public List<FileInfo> getActiveFileList() {
         return fileLifecycleEntries.values().stream()
                 .filter(f -> f.getFileStatus().equals(ACTIVE))
                 .collect(Collectors.toList());
@@ -143,20 +153,20 @@ public class InMemoryFileInfoStore implements FileInfoStore {
     }
 
     @Override
-    public Iterator<FileInfo> getReadyForGCFileInfos() throws StateStoreException {
+    public Iterator<FileInfo> getReadyForGCFileInfos() {
         return getReadyForGCFileInfoStream().iterator();
     }
 
     private Stream<FileInfo> getReadyForGCFileInfoStream() {
-        long delayInMilliseconds = 1000L * garbageCollectorDelayBeforeDeletionInSeconds;
-        long deleteTime = System.currentTimeMillis() - delayInMilliseconds;
+        long delayInMilliseconds = 1000L * gcDelayInSeconds;
+        long deleteTime = timeSupplier.get().toEpochMilli() - delayInMilliseconds;
         return fileLifecycleEntries.values().stream()
                 .filter(f -> f.getFileStatus().equals(GARBAGE_COLLECTION_PENDING))
                 .filter(f -> (f.getLastStateStoreUpdateTime() < deleteTime));
     }
 
     @Override
-    public void findFilesThatShouldHaveStatusOfGCPending() throws StateStoreException {
+    public void findFilesThatShouldHaveStatusOfGCPending() {
         // Identify any files which have lifecycle records that do not have any
         // file-in-partition records.
         Set<String> allFilesWithLifecycleEntries = new HashSet<>(fileLifecycleEntries.keySet());
