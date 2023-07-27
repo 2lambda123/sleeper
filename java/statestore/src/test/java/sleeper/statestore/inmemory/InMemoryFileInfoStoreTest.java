@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import sleeper.core.key.Key;
-import sleeper.core.partition.PartitionTree;
 import sleeper.core.partition.PartitionsBuilder;
 import sleeper.core.schema.Field;
 import sleeper.core.schema.Schema;
@@ -51,6 +50,7 @@ import static sleeper.statestore.FileInfo.FileStatus.FILE_IN_PARTITION;
 import static sleeper.statestore.FileInfo.FileStatus.GARBAGE_COLLECTION_PENDING;
 
 public class InMemoryFileInfoStoreTest {
+    private final Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
 
     @Nested
     @DisplayName("Add files to store")
@@ -58,15 +58,7 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldAddAndReadActiveFiles() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder()
-                    .schema(schema)
-                    .partitionTree(tree)
-                    .lastStateStoreUpdate(Instant.now())
-                    .build();
+            FileInfoFactory factory = defaultFactory();
             FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
             FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
             FileInfo file3 = factory.rootFile("file3", 100L, "e", "f");
@@ -114,11 +106,7 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldRemoveOneFileInPartitionRecordAndCreateNewActiveFile() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfoFactory factory = defaultFactory();
             FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "b");
             FileInfo newFile = factory.rootFile("newFile", 100L, "a", "b");
             FileInfoStore store = new InMemoryFileInfoStore();
@@ -139,11 +127,7 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldRemoveOneFileInPartitionRecordAndCreateMultipleNewActiveFiles() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfoFactory factory = defaultFactory();
             FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "c");
             FileInfo newLeftFile = factory.rootFile("newLeftFile", 100L, "a", "b");
             FileInfo newRightFile = factory.rootFile("newRightFile", 100L, "b", "c");
@@ -199,11 +183,7 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldMarkFileWithJobId() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfoFactory factory = defaultFactory();
             FileInfo file = factory.rootFile("file", 100L, "a", "b");
             FileInfoStore store = new InMemoryFileInfoStore();
             store.addFile(file);
@@ -220,11 +200,7 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldNotMarkFileWithJobIdWhenOneIsAlreadySet() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfoFactory factory = defaultFactory();
             FileInfo file = factory.rootFile("file", 100L, "a", "b");
             FileInfoStore store = new InMemoryFileInfoStore();
             store.addFile(file);
@@ -241,23 +217,10 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldNotUpdateOtherFilesIfOneFileAlreadyHasJobId() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
-            FileInfo file1 = factory.rootFile("file1", 100L, "a", "b")
-                    .toBuilder()
-                    .fileStatus(FileStatus.FILE_IN_PARTITION)
-                    .build();
-            FileInfo file2 = factory.rootFile("file2", 100L, "c", "d")
-                    .toBuilder()
-                    .fileStatus(FileStatus.FILE_IN_PARTITION)
-                    .build();
-            FileInfo file3 = factory.rootFile("file3", 100L, "e", "f")
-                    .toBuilder()
-                    .fileStatus(FileStatus.FILE_IN_PARTITION)
-                    .build();
+            FileInfoFactory factory = defaultFactory();
+            FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
+            FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
+            FileInfo file3 = factory.rootFile("file3", 100L, "e", "f");
             FileInfoStore store = new InMemoryFileInfoStore();
             store.addFiles(Arrays.asList(file1, file2, file3));
             store.atomicallyUpdateJobStatusOfFiles("job1", Collections.singletonList(file2));
@@ -277,11 +240,7 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldDeleteGarbageCollectedFile() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfoFactory factory = defaultFactory();
             FileInfo oldFile = factory.rootFile("oldFile", 100L, "a", "b");
             FileInfo newFile = factory.rootFile("newFile", 100L, "a", "b");
             FileInfoStore store = new InMemoryFileInfoStore();
@@ -298,10 +257,6 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldReturnCorrectReadyForGCFilesIterator() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
             Supplier<Instant> timeSupplier = List.of(
                     Instant.parse("2023-07-27T14:00:00Z"), Instant.parse("2023-07-27T14:05:00Z")
             ).iterator()::next;
@@ -309,9 +264,7 @@ public class InMemoryFileInfoStoreTest {
             //  - A file which should be garbage collected immediately
             //     (NB Need to add file, which adds file-in-partition and lifecycle enrties, then simulate a compaction
             //      to remove the file in partition entries, then set the status to ready for GC)
-            FileInfoFactory factory = FileInfoFactory.builder()
-                    .schema(schema)
-                    .partitionTree(tree)
+            FileInfoFactory factory = defaultFactoryBuilder()
                     .lastStateStoreUpdate(Instant.parse("2023-07-27T14:00:00Z").minus(Duration.ofSeconds(5)))
                     .build();
             FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
@@ -321,9 +274,7 @@ public class InMemoryFileInfoStoreTest {
                     List.of(file1.cloneWithStatus(FileStatus.FILE_IN_PARTITION)), file2);
             store.findFilesThatShouldHaveStatusOfGCPending();
             //  - An active file which should not be garbage collected immediately
-            FileInfoFactory factory2 = FileInfoFactory.builder()
-                    .schema(schema)
-                    .partitionTree(tree)
+            FileInfoFactory factory2 = defaultFactoryBuilder()
                     .lastStateStoreUpdate(Instant.parse("2023-07-27T14:05:00Z").minus(Duration.ofSeconds(5)))
                     .build();
             FileInfo file3 = factory2.rootFile("file3", 100L, "a", "b");
@@ -353,11 +304,7 @@ public class InMemoryFileInfoStoreTest {
         @Test
         public void shouldFindFilesThatShouldHaveStatusOfGCPending() throws Exception {
             // Given
-            Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-            PartitionTree tree = new PartitionsBuilder(schema)
-                    .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                    .buildTree();
-            FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+            FileInfoFactory factory = defaultFactory();
             FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
             FileInfo file2 = factory.rootFile("file2", 100L, "a", "b");
             FileInfo file3 = factory.rootFile("file3", 100L, "a", "b");
@@ -386,15 +333,7 @@ public class InMemoryFileInfoStoreTest {
     @Test
     public void shouldReturnCorrectFileInPartitionList() throws Exception {
         // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder()
-                .schema(schema)
-                .partitionTree(tree)
-                .lastStateStoreUpdate(Instant.now())
-                .build();
+        FileInfoFactory factory = defaultFactory();
         FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
         FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
         FileInfo file3 = factory.rootFile("file3", 200L, "e", "f");
@@ -416,11 +355,7 @@ public class InMemoryFileInfoStoreTest {
     @Test
     public void shouldReturnCorrectFileLifecycleList() throws Exception {
         // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+        FileInfoFactory factory = defaultFactory();
         FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
         FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
         FileInfo file3 = factory.rootFile("file3", 200L, "e", "f");
@@ -442,11 +377,7 @@ public class InMemoryFileInfoStoreTest {
     @Test
     public void shouldReturnCorrectActiveFileList() throws Exception {
         // Given
-        Schema schema = Schema.builder().rowKeyFields(new Field("key", new StringType())).build();
-        PartitionTree tree = new PartitionsBuilder(schema)
-                .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
-                .buildTree();
-        FileInfoFactory factory = FileInfoFactory.builder().schema(schema).partitionTree(tree).build();
+        FileInfoFactory factory = defaultFactory();
         FileInfo file1 = factory.rootFile("file1", 100L, "a", "b");
         FileInfo file2 = factory.rootFile("file2", 100L, "c", "d");
         FileInfo file3 = factory.rootFile("file3", 200L, "e", "f");
@@ -545,5 +476,17 @@ public class InMemoryFileInfoStoreTest {
             expected.add(files.get(i + 5).getFilename());
             assertThat(new HashSet<>(partitionToFileMapping.get("" + i))).isEqualTo(expected);
         }
+    }
+
+    private FileInfoFactory defaultFactory() {
+        return defaultFactoryBuilder().build();
+    }
+
+    private FileInfoFactory.Builder defaultFactoryBuilder() {
+        return FileInfoFactory.builder().schema(schema)
+                .partitionTree(new PartitionsBuilder(schema)
+                        .leavesWithSplits(Collections.singletonList("root"), Collections.emptyList())
+                        .buildTree())
+                .lastStateStoreUpdate(Instant.now());
     }
 }
