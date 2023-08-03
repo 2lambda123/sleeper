@@ -168,7 +168,15 @@ public interface AfterFileInfoStore {
 
 #### Parquet
 
--
+- Extra logic to simplify output in RangeQueryUtils.getFilterPredicateMultidimensionalKey
+- Could be separate pull request
+
+#### Query
+
+- Should still work
+- May want to extract model information to make it clearer what state store preconditions it is relying on,
+  - i.e if there is a file in partition entry, there wont be a file in partition entry for that file in any ancestor partitions.
+    - because the only way a file in partition entry can exist is if it has been split from a parent file in partition entry and the parent entry was deleted.
 
 #### State store
 
