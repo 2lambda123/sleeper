@@ -120,7 +120,9 @@ public interface AfterFileInfoStore {
 
 - CreateJobs
     - Needs to completely change
-    - Before it creates compaction jobs, it makes sure all files are split
+    - Before it creates compaction jobs, we want it to make sure all files are split
+        - In stage 2 branch, only one split is done for each file
+        - We'd like it to push files all the way down to leaf partitions to avoid intermediate compactions
     - Compaction Strategies
         - Depends on how records are set in FileInfo
         - How can we know how many records are in partitions higher up the tree?
