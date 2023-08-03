@@ -74,9 +74,11 @@ public interface AfterFileInfoStore {
 }
 ```
 
+# Analysis
+
 ## Changing modules
 
-#### Athena
+### Athena
 
 - SleeperMetadataHandler
 - getPartitionToActiveFilesMap > getPartitionToFileInPartitionMap
@@ -85,19 +87,19 @@ public interface AfterFileInfoStore {
     - Why is it only loading leaf partitions anyway?
     - Not changed yet in stage 1 or 2
 
-#### Bulk Import
+### Bulk Import
 
 - No changes needed
 - Only use of FileInfoStore is to call addFiles
 
-#### CDK
+### CDK
 
 - Only configuration for state store
     - table names
     - table definitions
     - permission names
 
-#### Clients
+### Clients
 
 - File status report
     - Needs to completely change!
@@ -116,7 +118,7 @@ public interface AfterFileInfoStore {
     - Is this needed? QueryExecutor already has the state store
     - Stage 1 just changes how QueryExecutor is called, need to check QueryExecutor directly
 
-#### Compaction job creation
+### Compaction job creation
 
 - CreateJobs
     - Needs to completely change
@@ -130,7 +132,7 @@ public interface AfterFileInfoStore {
             - Review compaction strategies and decide how they should work estimating record counts
             - We order by record count because compacting large files is not as useful as compacting small files
 
-#### Compaction job execution
+### Compaction job execution
 
 - CompactSortedFiles.createInputIterators
     - createInputIterators()
@@ -139,23 +141,23 @@ public interface AfterFileInfoStore {
     - compactSplitting()
         - can be removed
 
-#### Configuration
+### Configuration
 
 - New property to enable/disable doing metadata splits when compaction jobs are created
     - Defaults to true
 - System defined properties for state store table names
 
-#### Garbage collection
+### Garbage collection
 
 - Instead of deleting from the GC table, delete files which have no partition file entries
 
-#### Ingest
+### Ingest
 
 - Only use of FileInfoStore is to call addFiles
 - Some test setup & assertions changed
     - Could we extract these?
 
-#### Metrics
+### Metrics
 
 - In stage 2 branch, changed to file & record counts from file in partition records
     - This seems incorrect!
@@ -166,12 +168,12 @@ public interface AfterFileInfoStore {
     - Some records will be in multiple files
 - Need to decide how to estimate record count
 
-#### Parquet
+### Parquet
 
 - Extra logic to simplify output in RangeQueryUtils.getFilterPredicateMultidimensionalKey
 - Could be separate pull request
 
-#### Query
+### Query
 
 - Uses file in partition entries, so that if a file has been partially compacted its records won't be read twice
 - Should still work
@@ -181,7 +183,7 @@ public interface AfterFileInfoStore {
         - because the only way a file in partition entry can exist is if it has been split from a parent file in
           partition entry and the parent entry was deleted.
 
-#### Splitter
+### Splitter
 
 - In stage 2 branch
     - Changed how the number of records in each partition is counted
@@ -195,7 +197,7 @@ public interface AfterFileInfoStore {
       included
 - The splitter probably doesn't need any changes at all if it uses file lifecycle entries?
 
-#### State store
+### State store
 
 - In stage 2 branch
     - New model for file lifecycle information (FileLifecycleInfo)
@@ -218,7 +220,7 @@ public interface AfterFileInfoStore {
                     - If the value doesn't match what it was when you read it any more, it could fail and try again
             - Could have a separate table to track the progress of taking records out of a file
 
-#### System test drivers
+### System test drivers
 
 - In stage 2 branch
     - CheckBulkImportRecords and CompactionPerformanceResults use getFileInPartitionList() to calculate number of
@@ -226,12 +228,33 @@ public interface AfterFileInfoStore {
     - We could use getFileLifecycleList() to not include split files in this calculation,
     - Not a big deal though as the existing implementation will work
 
-#### Tables
+### Tables
 
 - Replacing old statestore tables with new ones
 
-#### Trino
+### Trino
 
 - SleeperRawAwsConnection
     - Changing how query executor is initialised by using getPartitionToFileInPartitionMap instead of
       getPartitionToActiveFilesMap
+
+## Approach
+
+- Create in memory version of new state store
+- Make modules work with this new in memory state store
+    1. Splitting
+    2. Compaction
+    3. GarbageCollector
+    4. Queries
+- Make DynamoDB version of new state store
+
+## Statestore design
+
+- Get rid of GC table
+- End up with 2 tables:
+    - FileInfo
+    - FileInPartition
+- Is there a reason to store file metadata in FileInPartition rather than just FileInfo?
+    - Cost difference loading from 1 DynamoDB table or 2?
+    - 1000 users making 1000 queries for 1KB of data a day over a month = 30M reads = ~£17pm
+    - Multiple small queries costs more (so multiple tables does have a cost impact)
