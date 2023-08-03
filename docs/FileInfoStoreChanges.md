@@ -175,12 +175,36 @@ public interface AfterFileInfoStore {
 
 - Should still work
 - May want to extract model information to make it clearer what state store preconditions it is relying on,
-  - i.e if there is a file in partition entry, there wont be a file in partition entry for that file in any ancestor partitions.
-    - because the only way a file in partition entry can exist is if it has been split from a parent file in partition entry and the parent entry was deleted.
+    - i.e if there is a file in partition entry, there won't be a file in partition entry for that file in any ancestor
+      partitions.
+        - because the only way a file in partition entry can exist is if it has been split from a parent file in
+          partition entry and the parent entry was deleted.
+
+#### Splitter
+
+- In stage 2 branch
+    - Changed how the number of records in each partition is counted
+        - Will only include files which are physically in that partition
+        - Still uses file in partition entries
+        - Should it use file lifecycle entries instead?
+        - Only works with leaf partitions
+    - A new test ensures that when a partition is split, only files physically in that partition will be examined for
+      computing a split point
+    - No test to ensure that partition will not be split if threshold would only be met if partial file entry was
+      included
+- The splitter probably doesn't need any changes at all if it uses file lifecycle entries?
 
 #### State store
 
-- FileStatus has been removed from FileInfo
+- In stage 2 branch
+    - New model for file lifecycle information (FileLifecycleInfo)
+        - No metadata for the file
+        - When a file in partition entry is split, we lose track entirely of how many records are in the file
+    - FileStatus has been removed from FileInfo
+    - FileInfo is a bit misleading now, as it's not about the file, but its association with a partition
+
+- We could keep all the current metadata for a file in the file lifecycle table
+    - Could just call it file info
 
 - Should we keep track of how many records have been split out of a file once a compaction happens?
     - We could keep a fully accurate count of how many records are in the system
