@@ -216,3 +216,21 @@ public interface AfterFileInfoStore {
                 - We could make the update conditional with TransactWriteItems
                     - If the value doesn't match what it was when you read it any more, it could fail and try again
             - Could have a separate table to track the progress of taking records out of a file
+
+#### System test drivers
+
+- In stage 2 branch
+    - CheckBulkImportRecords and CompactionPerformanceResults use getFileInPartitionList() to calculate number of
+      records.
+    - We could use getFileLifecycleList() to not include split files in this calculation,
+    - Not a big deal though as the existing implementation will work
+
+#### Tables
+
+- Replacing old statestore tables with new ones
+
+#### Trino
+
+- SleeperRawAwsConnection
+    - Changing how query executor is initialised by using getPartitionToFileInPartitionMap instead of
+      getPartitionToActiveFilesMap
