@@ -173,6 +173,7 @@ public interface AfterFileInfoStore {
 
 #### Query
 
+- Uses file in partition entries, so that if a file has been partially compacted its records won't be read twice
 - Should still work
 - May want to extract model information to make it clearer what state store preconditions it is relying on,
     - i.e if there is a file in partition entry, there won't be a file in partition entry for that file in any ancestor
