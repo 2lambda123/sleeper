@@ -137,6 +137,48 @@ public interface AfterFileInfoStore {
     - compactSplitting()
         - can be removed
 
-#### Status store
+#### Configuration
 
-- FileStatus has been removed
+- New property to enable/disable doing metadata splits when compaction jobs are created
+    - Defaults to true
+- System defined properties for state store table names
+
+#### Garbage collection
+
+- Instead of deleting from the GC table, delete files which have no partition file entries
+
+#### Ingest
+
+- Only use of FileInfoStore is to call addFiles
+- Some test setup & assertions changed
+    - Could we extract these?
+
+#### Metrics
+
+- In stage 2 branch, changed to file & record counts from file in partition records
+    - This seems incorrect!
+    - File in partition records will not have an accurate record count
+    - File count will be wrong if a file has multiple file in partition records
+- The record counts will still be wrong if we just count records in physical files
+    - Records would be double counted if a file has been partially compacted down the tree
+    - Some records will be in multiple files
+- Need to decide how to estimate record count
+
+#### Parquet
+
+-
+
+#### State store
+
+- FileStatus has been removed from FileInfo
+
+- Should we keep track of how many records have been split out of a file once a compaction happens?
+    - We could keep a fully accurate count of how many records are in the system
+        - Count records as we copy them out of a file during a compaction pulling records down the tree
+        - Record that count somewhere against the source file to remember how many records are duplicated
+            - How do we update that atomically?
+            - Could read the source file lifecycle record then write a new one
+                - That could conflict with the same file being compacted to a different partition
+                - We could make the update conditional with TransactWriteItems
+                    - If the value doesn't match what it was when you read it any more, it could fail and try again
+            - Could have a separate table to track the progress of taking records out of a file
