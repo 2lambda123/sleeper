@@ -106,7 +106,7 @@
         -->
         <okio.version>3.4.0</okio.version>
         <!-- Trino testing declares an old version. Managed from 1.2.3. -->
-        <logback.version>1.4.8</logback.version>
+        <logback.version>1.4.12</logback.version>
         <aws-java-sdk.version>1.12.498</aws-java-sdk.version>
         <aws-java-sdk-v2.version>2.20.95</aws-java-sdk-v2.version>
         <aws-crt.version>0.22.2</aws-crt.version>
