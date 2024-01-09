@@ -1,0 +1,845 @@
+repo_name: 2lambda123/sleeper
+report_id: 451579742b35cd7c32a27b924b19115c
+version: 0.1
+repo_type: Public
+timestamp: '2024-01-09T06:55:23+00:00'
+requested_by: kr565370
+provider: github
+branch: main
+detected_tools_count: 68
+tools:
+- name: Java
+  description: A concurrent, class-based, object-oriented, language specifically designed
+    to have as few implementation dependencies as possible
+  website_url: https://www.java.com
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/995/K85ZWV2F.png
+  detection_source_url: https://github.com/2lambda123/sleeper
+  detection_source: Repo Metadata
+- name: Python
+  description: A clear and powerful object-oriented programming language, comparable
+    to Perl, Ruby, Scheme, or Java.
+  website_url: https://www.python.org
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/993/pUBY5pVj.png
+  detection_source_url: https://github.com/2lambda123/sleeper
+  detection_source: Repo Metadata
+- name: ".NET"
+  description: A free, cross-platform, open source developer platform for building
+    many different types of applications
+  website_url: http://www.microsoft.com/net/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Frameworks (Full Stack)
+  image_url: https://img.stackshare.io/service/1014/IoPy1dce_400x400.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/bulk-import/bulk-import-runner/docker/Dockerfile
+  detection_source: java/bulk-import/bulk-import-runner/docker/Dockerfile
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: Node.js
+  description: A platform built on Chrome's JavaScript runtime for easily building
+    fast, scalable network applications
+  website_url: http://nodejs.org/
+  open_source: true
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Frameworks (Full Stack)
+  image_url: https://img.stackshare.io/service/1011/n1JRsFeB_400x400.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/scripts/cli/dependencies/Dockerfile
+  detection_source: scripts/cli/dependencies/Dockerfile
+  last_updated_by: patchwork01
+  last_updated_on: 2023-02-20 11:04:53.000000000 Z
+- name: Amazon S3
+  description: Store and retrieve any amount of data, at any time, from anywhere on
+    the web
+  website_url: http://aws.amazon.com/s3
+  open_source: false
+  hosted_saas: true
+  category: Data Stores
+  sub_category: Cloud Storage
+  image_url: https://img.stackshare.io/service/25/amazon-s3.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/configuration/pom.xml
+  detection_source: java/configuration/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: Hadoop
+  description: Open-source software for reliable, scalable, distributed computing
+  website_url: http://hadoop.apache.org/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Data Stores
+  sub_category: Databases
+  image_url: https://img.stackshare.io/service/1044/elephant_rgb_sq.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/garbage-collector/pom.xml
+  detection_source: java/garbage-collector/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: Docker
+  description: Enterprise Container Platform for High-Velocity Innovation.
+  website_url: https://www.docker.com/
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Virtual Machine Platforms & Containers
+  image_url: https://img.stackshare.io/service/586/n4u37v9t_400x400.png
+  detection_source_url: https://github.com/2lambda123/sleeper
+  detection_source: Repo Metadata
+- name: Git
+  description: Fast, scalable, distributed revision control system
+  website_url: http://git-scm.com/
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Version Control System
+  image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/2lambda123/sleeper
+  detection_source: Repo Metadata
+- name: GitHub Actions
+  description: Automate your workflow from idea to production
+  website_url: https://github.com/features/actions
+  open_source: false
+  hosted_saas: true
+  category: Build, Test, Deploy
+  sub_category: Continuous Integration
+  image_url: https://img.stackshare.io/service/11563/actions.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/.github/workflows/check-status.yaml
+  detection_source: ".github/workflows/check-status.yaml"
+  last_updated_by: kr565370
+  last_updated_on: 2023-01-03 10:28:38.000000000 Z
+- name: GlassFish
+  description: The Open Source Java EE Reference Implementation
+  website_url: https://glassfish.java.net
+  open_source: false
+  hosted_saas: false
+  category: Application Hosting
+  sub_category: Web Servers
+  image_url: https://img.stackshare.io/service/3628/515GX-Cc_400x400.jpg
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-11-10 23:53:37.000000000 Z
+- name: JUnit
+  description: A programmer-oriented testing framework for Java
+  website_url: http://junit.org/
+  license: EPL-1.0
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Testing Frameworks
+  image_url: https://img.stackshare.io/service/2020/874086.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/src/test/resources/examples/maven/configuration/pom.xml
+  detection_source: java/build/src/test/resources/examples/maven/configuration/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-11-09 09:12:10.000000000 Z
+- name: Mockito
+  description: Tasty mocking framework for unit tests in Java
+  website_url: https://site.mockito.org/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Testing Frameworks
+  image_url: https://img.stackshare.io/service/2021/4y634TJm_400x400.jpg
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/athena/pom.xml
+  detection_source: java/athena/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: NuGet
+  description: The package manager for .NET
+  website_url: https://www.nuget.org/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Package Managers
+  image_url: https://img.stackshare.io/service/2637/6I3oEOP4_400x400.jpg
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/bulk-import/bulk-import-runner/docker/Dockerfile
+  detection_source: java/bulk-import/bulk-import-runner/docker/Dockerfile
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: PyPI
+  description: A repository of software for the Python programming language
+  website_url: https://pypi.org/
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Hosted Package Repository
+  image_url: https://img.stackshare.io/service/12572/-RIWgodF_400x400.jpg
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/python/setup.py
+  detection_source: python/setup.py
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: SLF4J
+  description: Simple logging facade for Java
+  website_url: http://slf4j.org/
+  open_source: false
+  hosted_saas: false
+  category: Monitoring
+  sub_category: Log Management
+  image_url: https://img.stackshare.io/service/2805/05518ecaa42841e834421e9d6987b04f_400x400.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-09-07 11:39:27.000000000 Z
+- name: AWS Lambda
+  description: Automatically run code in response to modifications to objects in Amazon
+    S3 buckets, messages in Kinesis streams, or updates in DynamoDB
+  website_url: http://aws.amazon.com/lambda
+  open_source: false
+  hosted_saas: true
+  category: Application Hosting
+  sub_category: Serverless / Task Processing
+  image_url: https://img.stackshare.io/service/1909/aws-lambda.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/bulk-import/bulk-import-starter/pom.xml
+  detection_source: java/bulk-import/bulk-import-starter/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: Dataform
+  description: A framework for managing SQL based data operations.
+  website_url: https://dataform.co/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Analytics
+  sub_category: Business Intelligence
+  image_url: https://img.stackshare.io/service/11236/Group_22__3_.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-11-09 11:00:05.000000000 Z
+- name: Shell
+  description: A shell is a text-based terminal, used for manipulating programs and
+    files. Shell scripts typically manage program execution.
+  website_url: https://en.wikipedia.org/wiki/Shell_script
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Languages
+  image_url: https://img.stackshare.io/service/4631/default_c2062d40130562bdc836c13dbca02d318205a962.png
+  detection_source_url: https://github.com/2lambda123/sleeper
+  detection_source: Repo Metadata
+- name: Ubuntu
+  description: The leading OS for PC, tablet, phone and cloud
+  website_url: http://www.ubuntu.com/
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Operating Systems
+  image_url: https://img.stackshare.io/service/3511/cof_orange_hex.jpg
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/scripts/cli/dependencies/Dockerfile
+  detection_source: scripts/cli/dependencies/Dockerfile
+  last_updated_by: patchwork01
+  last_updated_on: 2023-03-01 12:07:00.000000000 Z
+- name: com.amazonaws:aws-java-sdk-autoscaling
+  description: The AWS Java SDK for Auto Scaling module holds the client classes that
+    are used for communicating with Auto Scaling Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/compaction/compaction-job-execution/pom.xml
+  detection_source: java/compaction/compaction-job-execution/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2023-02-06 17:32:50.000000000 Z
+- name: com.amazonaws:aws-java-sdk-cloudformation
+  description: The AWS Java SDK for AWS CloudFormation module holds the client classes
+    that are used for communicating with AWS CloudFormation Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/cdk-custom-resources/pom.xml
+  detection_source: java/cdk-custom-resources/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-18 09:59:15.000000000 Z
+- name: com.amazonaws:aws-java-sdk-cloudwatch
+  description: The AWS Java SDK for Amazon CloudWatch module holds the client classes
+    that are used for communicating with Amazon CloudWatch Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/ingest/ingest-runner/pom.xml
+  detection_source: java/ingest/ingest-runner/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-12-20 15:17:26.000000000 Z
+- name: com.amazonaws:aws-java-sdk-core
+  description: The AWS SDK for Java - Core module holds the classes that are used
+    by the individual service clients to interact with Amazon Web Services
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/common-job/pom.xml
+  detection_source: java/common-job/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-03-30 11:37:02.000000000 Z
+- name: com.amazonaws:aws-java-sdk-dynamodb
+  description: The AWS Java SDK for Amazon DynamoDB module holds the client classes
+    that are used for communicating with Amazon DynamoDB Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/cdk-custom-resources/pom.xml
+  detection_source: java/cdk-custom-resources/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-04-18 10:09:58.000000000 Z
+- name: com.amazonaws:aws-java-sdk-ec2
+  description: The AWS Java SDK for Amazon EC2 module holds the client classes that
+    are used for communicating with Amazon EC2 Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/cdk-custom-resources/pom.xml
+  detection_source: java/cdk-custom-resources/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-04-18 10:09:58.000000000 Z
+- name: com.amazonaws:aws-java-sdk-emr
+  description: The AWS Java SDK for Amazon EMR module holds the client classes that
+    are used for communicating with Amazon Elastic MapReduce Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/bulk-import/bulk-import-starter/pom.xml
+  detection_source: java/bulk-import/bulk-import-starter/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-08-26 08:34:02.000000000 Z
+- name: com.amazonaws:aws-java-sdk-iam
+  description: The AWS Java SDK for AWS IAM module holds the client classes that are
+    used for communicating with AWS Identity and Access Management Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/compaction/compaction-job-creation/pom.xml
+  detection_source: java/compaction/compaction-job-creation/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: com.amazonaws:aws-java-sdk-lambda
+  description: The AWS Java SDK for AWS Lambda module holds the client classes that
+    are used for communicating with AWS Lambda Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/ingest/ingest-starter/pom.xml
+  detection_source: java/ingest/ingest-starter/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-11 10:00:41.000000000 Z
+- name: com.amazonaws:aws-java-sdk-s3
+  description: The AWS Java SDK for Amazon S3 module holds the client classes that
+    is used for communicating with Amazon Simple Storage Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/configuration/pom.xml
+  detection_source: java/configuration/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: com.amazonaws:aws-java-sdk-sns
+  description: The AWS Java SDK for Amazon SNS module holds the client classes that
+    are used for communicating with Amazon Simple Notification Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/query/pom.xml
+  detection_source: java/query/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: com.amazonaws:aws-java-sdk-sqs
+  description: The AWS Java SDK for Amazon SQS module holds the client classes that
+    are used for communicating with Amazon Simple Queue Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/common-job/pom.xml
+  detection_source: java/common-job/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-03-30 11:37:02.000000000 Z
+- name: com.amazonaws:aws-java-sdk-sts
+  description: The AWS Java SDK for AWS STS module holds the client classes that are
+    used for communicating with AWS Security Token Service
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/bulk-import/bulk-import-runner/pom.xml
+  detection_source: java/bulk-import/bulk-import-runner/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-20 13:28:45.000000000 Z
+- name: com.fasterxml.jackson.core:jackson-annotations
+  description: Core annotations used for value types
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/athena/pom.xml
+  detection_source: java/athena/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-18 09:59:15.000000000 Z
+- name: com.fasterxml.jackson.core:jackson-core
+  description: Core Jackson processing abstractions
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-23 09:36:03.000000000 Z
+- name: com.fasterxml.jackson.core:jackson-databind
+  description: 'General data-binding functionality for Jackson: works on core streaming
+    API'
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-23 09:36:03.000000000 Z
+- name: com.fasterxml.jackson.dataformat:jackson-dataformat-xml
+  description: Data format extension for Jackson
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-23 09:36:03.000000000 Z
+- name: com.fasterxml.jackson.dataformat:jackson-dataformat-yaml
+  description: Support for reading and writing YAML-encoded data via Jackson abstractions
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-23 09:36:03.000000000 Z
+- name: com.fasterxml.jackson.datatype:jackson-datatype-jsr310
+  description: Add-on module to support JSR-310
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-23 09:36:03.000000000 Z
+- name: com.github.spotbugs:spotbugs-annotations
+  description: Annotations the SpotBugs tool supports
+  license: LGPL-2.1
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: mh674563
+  last_updated_on: 2023-07-31 16:53:25.000000000 Z
+- name: com.google.code.gson:gson
+  description: Gson JSON library
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/cdk-environment/pom.xml
+  detection_source: java/cdk-environment/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-07 10:54:26.000000000 Z
+- name: commons-codec:commons-codec
+  description: The Apache Commons Codec package contains simple encoder and decoders
+    for various formats such as Base64 and Hexadecimal
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/core/pom.xml
+  detection_source: java/core/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: commons-io:commons-io
+  description: The Apache Commons IO library contains utility classes
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/cdk-environment/pom.xml
+  detection_source: java/cdk-environment/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-08-15 09:12:34.000000000 Z
+- name: net.sf.jung:jung-algorithms
+  description: Algorithms for the JUNG project
+  license: DSDP
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: mh674563
+  last_updated_on: 2023-07-31 16:53:25.000000000 Z
+- name: net.sf.jung:jung-api
+  description: Graph interfaces used by the JUNG project
+  license: DSDP
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: mh674563
+  last_updated_on: 2023-07-31 16:53:25.000000000 Z
+- name: net.sf.jung:jung-graph-impl
+  description: Graph implementations for the JUNG project
+  license: DSDP
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: mh674563
+  last_updated_on: 2023-07-31 16:53:25.000000000 Z
+- name: net.sf.jung:jung-io
+  description: IO support classes for JUNG
+  license: DSDP
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: mh674563
+  last_updated_on: 2023-07-31 16:53:25.000000000 Z
+- name: net.sf.jung:jung-visualization
+  description: Core visualization support for the JUNG project
+  license: DSDP
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: mh674563
+  last_updated_on: 2023-07-31 16:53:25.000000000 Z
+- name: org.apache.commons:commons-configuration2
+  open_source: false
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/configuration/pom.xml
+  detection_source: java/configuration/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-05-30 10:05:08.000000000 Z
+- name: org.apache.commons:commons-lang3
+  description: Apache Commons Lang
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/src/test/resources/examples/maven/ingest/pom.xml
+  detection_source: java/build/src/test/resources/examples/maven/ingest/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2022-11-09 16:25:19.000000000 Z
+- name: org.apache.hadoop:hadoop-aws
+  description: This module contains code to support integration with Amazon Web Services
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/garbage-collector/pom.xml
+  detection_source: java/garbage-collector/pom.xml
+  last_updated_by: kr565370
+  last_updated_on: 2023-01-10 14:56:03.000000000 Z
+- name: org.apache.hadoop:hadoop-client
+  description: Apache Hadoop Client
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/garbage-collector/pom.xml
+  detection_source: java/garbage-collector/pom.xml
+  last_updated_by: kr565370
+  last_updated_on: 2023-01-10 14:56:03.000000000 Z
+- name: org.apache.parquet:parquet-hadoop
+  open_source: false
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/parquet/pom.xml
+  detection_source: java/parquet/pom.xml
+  last_updated_by: kr565370
+  last_updated_on: 2023-01-10 14:56:03.000000000 Z
+- name: org.assertj:assertj-core
+  description: Rich and fluent assertions for testing for Java
+  version: 3.24.1
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/pom.xml
+  detection_source: java/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-31 11:39:02.000000000 Z
+- name: org.glassfish.jersey.core:jersey-client
+  description: Jersey core client implementation
+  license: NetCDF
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-09 12:33:05.000000000 Z
+- name: org.glassfish.jersey.inject:jersey-hk2
+  description: HK2 InjectionManager implementation
+  open_source: false
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-09 12:33:05.000000000 Z
+- name: org.glassfish.jersey.media:jersey-media-json-jackson
+  description: Jersey JSON Jackson entity providers support module
+  license: NetCDF
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-20 15:04:03.000000000 Z
+- name: org.java-websocket:Java-WebSocket
+  description: A barebones WebSocket client and server implementation written in 100%
+    Java
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/clients/pom.xml
+  detection_source: java/clients/pom.xml
+  last_updated_by: kr565370
+  last_updated_on: 2023-04-13 18:08:17.000000000 Z
+- name: org.junit.jupiter:junit-jupiter-api
+  description: Module "junit-jupiter-api" of JUnit 5
+  version: 5.9.1
+  license: EPL-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/pom.xml
+  detection_source: java/build/src/test/resources/examples/maven/configuration/pom.xml
+  last_updated_by: kr565370
+  last_updated_on: 2023-01-10 13:49:25.000000000 Z
+- name: org.junit.jupiter:junit-jupiter-params
+  description: Module "junit-jupiter-params" of JUnit 5
+  license: EPL-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/bulk-import/bulk-import-runner/pom.xml
+  detection_source: java/bulk-import/bulk-import-runner/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-20 13:28:45.000000000 Z
+- name: org.junit.vintage:junit-vintage-engine
+  description: Module "junit-vintage-engine" of JUnit 5
+  license: EPL-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/trino/pom.xml
+  detection_source: java/trino/pom.xml
+  last_updated_by: gaffer01
+  last_updated_on: 2023-03-17 12:25:04.000000000 Z
+- name: org.mockito:mockito-core
+  description: Mockito mock objects library core API and implementation
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/athena/pom.xml
+  detection_source: java/athena/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-01-24 15:27:12.000000000 Z
+- name: org.scala-lang:scala-library
+  description: Standard library for the Scala Programming Language
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/bulk-import/bulk-import-runner/pom.xml
+  detection_source: java/bulk-import/bulk-import-runner/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-20 13:28:45.000000000 Z
+- name: org.slf4j:slf4j-api
+  description: The slf4j API
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/build/pom.xml
+  detection_source: java/build/pom.xml
+  last_updated_by: mh674563
+  last_updated_on: 2023-07-31 16:53:25.000000000 Z
+- name: org.testcontainers:testcontainers
+  description: Isolated container management for Java code testing
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/athena/pom.xml
+  detection_source: java/athena/pom.xml
+  last_updated_by: patchwork01
+  last_updated_on: 2023-07-18 09:59:15.000000000 Z
+- name: software.amazon.awssdk:s3
+  description: The AWS Java SDK for Amazon S3 module holds the client classes that
+    are used for communicating with Amazon Simple Storage Service
+  open_source: false
+  hosted_saas: false
+  category: Libraries
+  sub_category: Maven Packages
+  image_url: https://img.stackshare.io/package/maven/image.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/java/clients/pom.xml
+  detection_source: java/clients/pom.xml
+  last_updated_by: kr565370
+  last_updated_on: 2023-04-13 18:08:17.000000000 Z
+- name: boto3
+  description: The AWS SDK for Python
+  package_url: https://pypi.org/project/boto3
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/19840/default_1c41e593803157c668b26f27387160254f0f5371.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/python/setup.py
+  detection_source: python/setup.py
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: pyarrow
+  description: Python library for Apache Arrow
+  package_url: https://pypi.org/project/pyarrow
+  license: Apache-2.0
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20366/default_20f72d65682b6cad9939bcf162d0ef14fced900c.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/python/setup.py
+  detection_source: python/setup.py
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
+- name: s3fs
+  description: Convenient Filesystem interface over S3
+  package_url: https://pypi.org/project/s3fs
+  license: BSD-3-Clause
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: PyPI Packages
+  image_url: https://img.stackshare.io/package/20632/default_a11444edf33ff94e58c187eb4ce85472f4316c58.png
+  detection_source_url: https://github.com/2lambda123/sleeper/blob/main/python/setup.py
+  detection_source: python/setup.py
+  last_updated_by: gaffer01
+  last_updated_on: 2022-06-15 15:09:16.000000000 Z
